@@ -1,21 +1,13 @@
 import { useState } from 'react'
-import { Medal, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useData } from '@/hooks/useData'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { CompetitionFeedItem } from '@/components/competitions/CompetitionFeedItem'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PortalPage } from '@/components/layout/PortalPage'
-
-const PLACEMENTS = [
-  { value: 1 as const, label: '1st' },
-  { value: 2 as const, label: '2nd' },
-  { value: 3 as const, label: '3rd' },
-]
+import { PortalSection } from '@/components/layout/PortalSection'
 
 export function Competitions() {
   const { data, loading, enterComp, rank } = useData()
@@ -35,6 +27,17 @@ export function Competitions() {
         : `Entered ${comp?.name}! +75 points`,
     )
   }
+
+  const togglePlacement = (compId: string, p: 1 | 2 | 3) => {
+    setSelectedPlacement((s) => ({
+      ...s,
+      [compId]: s[compId] === p ? undefined : p,
+    }))
+  }
+
+  const featuredId =
+    chapter.competitions.find((c) => !profile.enteredCompetitionIds.includes(c.id))?.id ??
+    chapter.competitions[0]?.id
 
   const leaderboard = [...chapter.leaderboard]
     .filter((e) => !e.isCurrentUser || e.id === profile.uid)
@@ -66,136 +69,93 @@ export function Competitions() {
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="events" className="space-y-4">
-          <div className="grid gap-5 sm:grid-cols-2">
-            {chapter.competitions.map((comp) => {
+        <TabsContent value="events" className="space-y-2">
+          <div className="portal-feed-list">
+            {chapter.competitions.map((comp, i) => {
               const entered = profile.enteredCompetitionIds.includes(comp.id)
               const placement = profile.competitionPlacements[comp.id]
-              const selected = selectedPlacement[comp.id]
+              const featured = comp.id === featuredId
 
               return (
-                <Card key={comp.id} className="flex flex-col">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base">{comp.name}</CardTitle>
-                      <Badge variant="secondary" className="shrink-0 capitalize">
-                        {comp.category}
-                      </Badge>
-                    </div>
-                    <CardDescription>Up to {comp.maxPoints} points</CardDescription>
-                  </CardHeader>
-                  <CardContent className="mt-auto space-y-4">
-                    {entered && (
-                      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-400">
-                        <Check className="h-4 w-4" /> Entered
-                        {placement && ` — ${placement}${placement === 1 ? 'st' : placement === 2 ? 'nd' : 'rd'} place`}
-                      </p>
-                    )}
-                    <div>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                        Placement (optional)
-                      </p>
-                      <div className="flex flex-wrap gap-2" role="group" aria-label="Select placement">
-                        {PLACEMENTS.map(({ value, label }) => (
-                          <button
-                            key={value}
-                            type="button"
-                            disabled={entered && !!placement}
-                            className={cn(
-                              'portal-placement-pill',
-                              `portal-placement-pill--${value}`,
-                            )}
-                            data-selected={selected === value ? 'true' : 'false'}
-                            aria-pressed={selected === value}
-                            onClick={() =>
-                              setSelectedPlacement((s) => ({
-                                ...s,
-                                [comp.id]: s[comp.id] === value ? undefined : value,
-                              }))
-                            }
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <Button
-                      variant={entered ? 'outline' : 'primary'}
-                      className="w-full"
-                      onClick={() => handleEnter(comp.id)}
-                    >
-                      {entered ? 'Update Entry' : 'Enter Competition'}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <CompetitionFeedItem
+                  key={comp.id}
+                  competition={comp}
+                  entered={entered}
+                  placement={placement}
+                  selectedPlacement={selectedPlacement[comp.id]}
+                  onSelectPlacement={(p) => togglePlacement(comp.id, p)}
+                  onEnter={() => handleEnter(comp.id)}
+                  featured={featured}
+                  isLast={i === chapter.competitions.length - 1}
+                />
               )
             })}
           </div>
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Medal className="h-5 w-5 text-[var(--brand-accent)]" />
-                Chapter Leaderboard
-              </CardTitle>
-              <CardDescription>
-                Your rank:{' '}
-                <span className="font-semibold text-[var(--brand-accent)]" style={{ fontFamily: 'var(--font-display)' }}>
-                  #{rank}
-                </span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {leaderboard.map((entry) => {
-                  const isYou = entry.isCurrentUser || entry.id === profile.uid
-                  return (
-                    <li
-                      key={entry.id}
+          <PortalSection
+            kicker="Standings"
+            title="Chapter leaderboard"
+            glow="accent"
+          >
+            <p className="mb-6 text-sm text-[var(--text-muted)]">
+              Your rank{' '}
+              <span
+                className="font-semibold text-[var(--brand-accent)]"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                #{rank}
+              </span>
+            </p>
+            <div>
+              {leaderboard.map((entry, i) => {
+                const isYou = entry.isCurrentUser || entry.id === profile.uid
+                const isLast = i === leaderboard.length - 1
+                return (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      'portal-leaderboard-row',
+                      isYou && 'portal-leaderboard-row--you',
+                      !isLast && 'border-b border-white/5',
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'portal-list-row flex items-center gap-4',
-                        isYou ? 'portal-list-row--highlight' : 'portal-list-row--default',
+                        'portal-rank-num',
+                        entry.rank <= 3 && 'portal-rank-num--top',
                       )}
                     >
-                      <span
-                        className={cn(
-                          'portal-rank-badge',
-                          entry.rank === 1 && 'portal-rank-1',
-                          entry.rank === 2 && 'portal-rank-2',
-                          entry.rank === 3 && 'portal-rank-3',
-                          entry.rank > 3 && 'portal-rank-n',
+                      {entry.rank}
+                    </span>
+                    <Avatar className="h-9 w-9 border-0 bg-[color-mix(in_srgb,var(--surface-muted)_50%,transparent)]">
+                      <AvatarFallback className="text-xs font-semibold">
+                        {entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="portal-leaderboard-name truncate font-medium text-[var(--text-primary)]">
+                        {entry.name}
+                        {isYou && (
+                          <span className="ml-2 text-xs font-normal text-[var(--brand-accent)]">you</span>
                         )}
-                      >
-                        {entry.rank}
-                      </span>
-                      <Avatar className="h-9 w-9 border border-[rgba(255,255,255,0.08)]">
-                        <AvatarFallback className="text-xs font-semibold">
-                          {entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-[var(--text-primary)]">
-                          {entry.name}
-                          {isYou && (
-                            <span className="ml-2 text-xs font-semibold text-[var(--brand-accent)]">(You)</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)]">{entry.competitionPoints} competition pts</p>
-                      </div>
-                      <span
-                        className="font-bold tabular-nums text-[var(--brand-accent)]"
-                        style={{ fontFamily: 'var(--font-display)' }}
-                      >
-                        {entry.points.toLocaleString()}
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-            </CardContent>
-          </Card>
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {entry.competitionPoints} competition pts
+                      </p>
+                    </div>
+                    <span
+                      className="font-bold tabular-nums text-[var(--brand-accent)]"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      {entry.points.toLocaleString()}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </PortalSection>
         </TabsContent>
       </Tabs>
     </PortalPage>

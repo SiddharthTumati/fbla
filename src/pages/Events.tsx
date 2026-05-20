@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useData } from '@/hooks/useData'
-import { EventCard } from '@/components/events/EventCard'
+import { EventFeedItem } from '@/components/events/EventFeedItem'
 import { EventHeroBanner } from '@/components/events/EventHeroBanner'
 import { getNextUpcomingEvent } from '@/lib/events'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import type { ChapterEvent } from '@/types'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PortalPage } from '@/components/layout/PortalPage'
+import { PortalSection } from '@/components/layout/PortalSection'
 
 export function Events() {
   const { data, loading, registerEvent, createEvent } = useData()
@@ -73,27 +74,30 @@ export function Events() {
     setForm({ title: '', description: '', date: '', location: '', capacity: '40', category: 'workshop' })
   }
 
-  const renderEventGrid = (events: ChapterEvent[], heroId?: string | null) => {
-    const gridEvents = heroId ? events.filter((e) => e.id !== heroId) : events
-    if (gridEvents.length === 0 && !heroId) {
+  const renderEventFeed = (events: ChapterEvent[], heroId?: string | null) => {
+    const feedEvents = heroId ? events.filter((e) => e.id !== heroId) : events
+    if (feedEvents.length === 0 && !heroId) {
       return <p className="portal-empty">No events in this category.</p>
     }
     return (
       <>
-        {gridEvents.length > 0 && (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {gridEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                isRegistered={profile.registeredEventIds.includes(event.id)}
-                onRegister={() => handleRegister(event.id)}
-              />
-            ))}
-          </div>
+        {feedEvents.length > 0 && (
+          <PortalSection kicker="Schedule" title={heroId ? 'More upcoming' : 'All events'} glow="none">
+            <div className="portal-feed-list">
+              {feedEvents.map((event, i) => (
+                <EventFeedItem
+                  key={event.id}
+                  event={event}
+                  isRegistered={profile.registeredEventIds.includes(event.id)}
+                  onRegister={() => handleRegister(event.id)}
+                  isLast={i === feedEvents.length - 1}
+                />
+              ))}
+            </div>
+          </PortalSection>
         )}
-        {gridEvents.length === 0 && heroId && (
-          <p className="portal-empty mt-6">No other events in this category.</p>
+        {feedEvents.length === 0 && heroId && (
+          <p className="portal-empty">No other events in this category.</p>
         )}
       </>
     )
@@ -108,39 +112,62 @@ export function Events() {
           canManage ? (
             <Dialog open={manageOpen} onOpenChange={setManageOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Plus className="h-4 w-4" /> Add Event
-                </Button>
+                <button type="button" className="portal-text-action">
+                  <Plus className="mr-1 inline h-4 w-4" aria-hidden />
+                  Add event
+                </button>
               </DialogTrigger>
-              <DialogContent className="portal-card border-[rgba(255,255,255,0.08)] bg-[color-mix(in_srgb,var(--surface-raised)_55%,transparent)]">
+              <DialogContent className="portal-card border-0 bg-[color-mix(in_srgb,var(--surface-raised)_55%,transparent)]">
                 <DialogHeader>
-                  <DialogTitle className="portal-card-title">Create Event</DialogTitle>
+                  <DialogTitle className="portal-section-title">Create event</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-5 py-4">
                   <div>
-                    <Label>Title</Label>
-                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                    <Label className="portal-kicker">Title</Label>
+                    <Input
+                      className="portal-input-minimal mt-2"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    />
                   </div>
                   <div>
-                    <Label>Description</Label>
-                    <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                    <Label className="portal-kicker">Description</Label>
+                    <Input
+                      className="portal-input-minimal mt-2"
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
                   </div>
                   <div>
-                    <Label>Date</Label>
-                    <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                    <Label className="portal-kicker">Date</Label>
+                    <Input
+                      type="date"
+                      className="portal-input-minimal mt-2"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    />
                   </div>
                   <div>
-                    <Label>Location</Label>
-                    <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                    <Label className="portal-kicker">Location</Label>
+                    <Input
+                      className="portal-input-minimal mt-2"
+                      value={form.location}
+                      onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    />
                   </div>
                   <div>
-                    <Label>Capacity</Label>
-                    <Input type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
+                    <Label className="portal-kicker">Capacity</Label>
+                    <Input
+                      type="number"
+                      className="portal-input-minimal mt-2"
+                      value={form.capacity}
+                      onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                    />
                   </div>
                   <div>
-                    <Label>Category</Label>
+                    <Label className="portal-kicker">Category</Label>
                     <select
-                      className="flex h-10 w-full rounded-lg border border-[rgba(255,255,255,0.1)] bg-[color-mix(in_srgb,var(--surface-muted)_50%,transparent)] px-3 text-sm text-[var(--text-primary)]"
+                      className="portal-input-minimal mt-2 flex h-10 w-full text-sm text-[var(--text-primary)]"
                       value={form.category}
                       onChange={(e) => setForm({ ...form, category: e.target.value as ChapterEvent['category'] })}
                     >
@@ -151,7 +178,7 @@ export function Events() {
                     </select>
                   </div>
                   <Button variant="outline" onClick={handleCreate}>
-                    Create Event
+                    Create event
                   </Button>
                 </div>
               </DialogContent>
@@ -168,7 +195,7 @@ export function Events() {
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upcoming" className="space-y-8">
+        <TabsContent value="upcoming" className="space-y-2">
           {(() => {
             const upcoming = filterEvents('upcoming')
             const hero = getNextUpcomingEvent(upcoming)
@@ -184,7 +211,7 @@ export function Events() {
                     onRegister={() => handleRegister(hero.id)}
                   />
                 )}
-                {renderEventGrid(upcoming, hero?.id ?? null)}
+                {renderEventFeed(upcoming, hero?.id ?? null)}
               </>
             )
           })()}
@@ -195,7 +222,7 @@ export function Events() {
             {filterEvents(tab).length === 0 ? (
               <p className="portal-empty">No events in this category.</p>
             ) : (
-              renderEventGrid(filterEvents(tab))
+              renderEventFeed(filterEvents(tab))
             )}
           </TabsContent>
         ))}

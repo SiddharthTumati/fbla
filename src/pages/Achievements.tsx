@@ -20,11 +20,9 @@ import type { LucideIcon } from 'lucide-react'
 import { useData } from '@/hooks/useData'
 import { ACHIEVEMENTS } from '@/data/seed'
 import { POINT_RULES } from '@/lib/points'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PortalPage } from '@/components/layout/PortalPage'
+import { PortalSection } from '@/components/layout/PortalSection'
 
 const iconMap: Record<string, LucideIcon> = {
   footprints: Footprints,
@@ -72,6 +70,8 @@ export function Achievements() {
 
   const { profile } = data
   const unlocked = profile.achievements.length
+  const unlockedList = ACHIEVEMENTS.filter((a) => profile.achievements.includes(a.id))
+  const lockedList = ACHIEVEMENTS.filter((a) => !profile.achievements.includes(a.id))
 
   return (
     <PortalPage>
@@ -80,83 +80,77 @@ export function Achievements() {
         description={`${unlocked} of ${ACHIEVEMENTS.length} badges unlocked — earn points through events and competitions.`}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Point Rules</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid gap-3 text-sm sm:grid-cols-2">
-            {[
-              ['Event registration', POINT_RULES.eventRegister],
-              ['Early registration (30+ days)', POINT_RULES.earlyRegister],
-              ['Enter competition', POINT_RULES.competitionEnter],
-              ['1st place', POINT_RULES.placement1],
-              ['2nd place', POINT_RULES.placement2],
-              ['3rd place', POINT_RULES.placement3],
-            ].map(([label, pts]) => (
-              <li
-                key={label}
-                className="flex justify-between gap-4 rounded-lg border border-[rgba(255,255,255,0.05)] bg-[color-mix(in_srgb,var(--surface-muted)_30%,transparent)] px-3 py-2"
-              >
-                <span className="text-[var(--text-muted)]">{label}</span>
-                <span className="font-semibold text-[var(--brand-accent)]">+{pts}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <PortalSection kicker="Scoring" title="Point rules" glow="none">
+        <dl className="portal-rules-inline">
+          {[
+            ['Registration', POINT_RULES.eventRegister],
+            ['Early bird', POINT_RULES.earlyRegister],
+            ['Competition', POINT_RULES.competitionEnter],
+            ['1st place', POINT_RULES.placement1],
+            ['2nd place', POINT_RULES.placement2],
+            ['3rd place', POINT_RULES.placement3],
+          ].map(([label, pts]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>+{pts}</dd>
+            </div>
+          ))}
+        </dl>
+      </PortalSection>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {ACHIEVEMENTS.map((achievement) => {
-          const isUnlocked = profile.achievements.includes(achievement.id)
-          const Icon = iconMap[achievement.icon] ?? Star
-          const progress = getProgress(achievement, profile)
-
-          return (
-            <Card
-              key={achievement.id}
-              className={cn(
-                'transition-all duration-300',
-                isUnlocked ? 'portal-achievement--unlocked' : 'portal-achievement--locked',
-              )}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start gap-4">
-                  <div
-                    className={cn(
-                      'portal-achievement-icon rounded-xl p-3',
-                      isUnlocked ? 'portal-stat-icon' : 'bg-[color-mix(in_srgb,var(--surface-muted)_40%,transparent)]',
-                    )}
-                  >
-                    {isUnlocked ? (
-                      <Icon className="h-6 w-6 text-[var(--brand-accent)]" strokeWidth={1.75} />
-                    ) : (
-                      <Lock className="h-6 w-6 text-[var(--text-muted)]" strokeWidth={1.75} />
-                    )}
+      {unlockedList.length > 0 && (
+        <PortalSection kicker="Earned" title="Unlocked" glow="accent">
+          <div className="portal-achievement-list">
+            {unlockedList.map((achievement) => {
+              const Icon = iconMap[achievement.icon] ?? Star
+              return (
+                <div
+                  key={achievement.id}
+                  className="portal-achievement-row portal-achievement-row--unlocked"
+                >
+                  <Icon className="h-5 w-5 text-[var(--brand-accent)]" strokeWidth={1.75} aria-hidden />
+                  <div>
+                    <p className="portal-achievement-row-title">{achievement.title}</p>
+                    <p className="portal-achievement-row-desc">{achievement.description}</p>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3
-                      className={cn(
-                        'font-semibold',
-                        isUnlocked ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)]',
-                      )}
-                    >
-                      {achievement.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-[var(--text-muted)]">{achievement.description}</p>
-                    {!isUnlocked && <Progress value={progress} className="mt-3 h-1.5 opacity-80" />}
-                    {isUnlocked && (
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
-                        Unlocked
-                      </p>
-                    )}
+                  <span className="portal-achievement-status portal-achievement-status--unlocked">
+                    Unlocked
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </PortalSection>
+      )}
+
+      <PortalSection kicker="In progress" title="Locked" glow="cool">
+        <div className="portal-achievement-list">
+          {lockedList.map((achievement) => {
+            const progress = getProgress(achievement, profile)
+            return (
+              <div
+                key={achievement.id}
+                className="portal-achievement-row portal-achievement-row--locked"
+              >
+                <Lock className="h-5 w-5 text-[var(--text-muted)]" strokeWidth={1.5} aria-hidden />
+                <div>
+                  <p className="portal-achievement-row-title">{achievement.title}</p>
+                  <p className="portal-achievement-row-desc">{achievement.description}</p>
+                  <div className="portal-progress-line mt-2 max-w-xs">
+                    <div
+                      className="portal-progress-line-fill"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                <span className="portal-achievement-status portal-achievement-status--locked">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </PortalSection>
     </PortalPage>
   )
 }

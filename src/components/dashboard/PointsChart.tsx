@@ -7,7 +7,6 @@ import {
   YAxis,
 } from 'recharts'
 import { useTheme } from '@/hooks/useTheme'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { MemberProfile } from '@/types'
 
 export function PointsChart({ history }: { history: MemberProfile['pointsHistory'] }) {
@@ -19,35 +18,51 @@ export function PointsChart({ history }: { history: MemberProfile['pointsHistory
   }))
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Points Over Time</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[min(280px,42vh)] w-full min-h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="brandGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={accent} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={accent} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} />
-              <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{
-                  background: 'var(--surface-raised)',
-                  border: '1px solid var(--border-default)',
-                  borderRadius: '8px',
-                  color: 'var(--text-primary)',
-                }}
-              />
-              <Area type="monotone" dataKey="points" stroke={accent} fill="url(#brandGrad)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="portal-chart-zone">
+      <p className="portal-kicker">Performance</p>
+      <h2 className="portal-section-title">Points over time</h2>
+      <div className="mt-6 h-[min(300px,44vh)] w-full min-h-[240px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="brandGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={accent} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="month"
+              stroke="var(--text-muted)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              stroke="var(--text-muted)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={40}
+            />
+            <Tooltip
+              contentStyle={{
+                background: 'color-mix(in srgb, var(--surface-raised) 90%, transparent)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '4px',
+                color: 'var(--text-primary)',
+                boxShadow: 'none',
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="points"
+              stroke={accent}
+              fill="url(#brandGrad)"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   )
 }
