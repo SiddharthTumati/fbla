@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Star, Calendar, Trophy, TrendingUp, ArrowRight } from 'lucide-react'
-import { useData } from '@/contexts/DataContext'
+import { useData } from '@/hooks/useData'
 import { StatCard } from '@/components/dashboard/StatCard'
 import { PointsChart } from '@/components/dashboard/PointsChart'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
@@ -15,7 +15,7 @@ export function Dashboard() {
   if (loading || !data) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
       </div>
     )
   }

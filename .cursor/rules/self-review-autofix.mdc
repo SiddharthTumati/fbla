@@ -1,0 +1,26 @@
+---
+description: After self-review audit, auto-fix drift findings (extends motiful/self-review)
+alwaysApply: true
+---
+
+# Self-Review Auto-Fix
+
+When the user runs **self-review**, **audit**, or `/self-review`:
+
+1. Run the [motiful/self-review](https://github.com/motiful/self-review) audit (scope lock → 6 dimensions → artifact verification).
+2. **Then auto-fix** all in-scope **Drift** and **Broken** findings — unlike upstream self-review, this project opts into fixes.
+3. Re-run `npm run build` and `npm run lint` after fixes; both must pass before calling the work done.
+4. Update `README.md` when routes, pages, or persistence behavior changes.
+5. Commit with a clear message when the user asked to implement fixes or ship for judges.
+
+## Quality gates (must pass before "done")
+
+- `npm run build` — zero errors
+- `npm run lint` — zero errors
+- README matches actual `src/pages/` and storage keys
+- Demo: chapter data scoped per browser tab session (`fbla:chapter:<sessionId>`)
+
+## Do not auto-fix
+
+- Out-of-scope / deferred items unless the user explicitly expands scope
+- Production Firebase/Vercel deploy (document steps; deploy only when credentials are available)

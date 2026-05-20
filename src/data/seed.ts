@@ -1,6 +1,7 @@
 import type { Achievement, ChapterState, Competition, MemberProfile } from '@/types'
 
-export const CHAPTER_NAME = import.meta.env.VITE_CHAPTER_NAME || 'Riverside High FBLA'
+export const CHAPTER_NAME =
+  import.meta.env.VITE_CHAPTER_NAME || 'Marvin Ridge High School FBLA'
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first-step', title: 'First Step', description: 'Earn your first 100 points', icon: 'footprints', pointsRequired: 0, type: 'points', threshold: 100 },

@@ -1,8 +1,21 @@
 # FBLA Member Portal
 
-A production-quality React web app for FBLA chapter information management — member dashboard, event registration, competition tracking, leaderboards, and achievements.
+A polished React web app for FBLA chapter information management — member dashboard, event registration, competition tracking, leaderboards, and achievements.
 
-**Live demo:** Deploy to Vercel (see below) and share your URL with judges.
+**Live demo:** Deploy to Vercel (see below) and add your URL here for judges.
+
+## Homepage (`/`)
+
+Full-screen video hero with pill navbar (mobile menu on small screens), staggered typography, and scrollable portal features below. Signed-in users can return to the landing page anytime via **View landing** in the portal sidebar.
+
+## Themes (saved in browser)
+
+| Theme | Hero headline | Colors | Fonts |
+|-------|---------------|--------|-------|
+| **FBLA National** | make · *your* · mark | Navy, gold | Oswald + Caveat |
+| **Marvin Ridge** | lead · *your* · chapter | Royal blue, orange | Barlow Condensed |
+
+Toggle **FBLA / Marvin Ridge** in the navbar, feature sections, portal sidebar, or **Profile → Appearance**.
 
 ## Features
 
@@ -11,7 +24,7 @@ A production-quality React web app for FBLA chapter information management — m
 - **Competition tracker** — enter events, record placements, chapter leaderboard
 - **Achievements** — 15 unlockable badges with progress bars
 - **Google SSO** — Firebase Auth with officer/admin roles via env emails
-- **localStorage persistence** — data stays on the judge’s device per account
+- **localStorage persistence** — member profile per account; chapter events/leaderboard per **browser tab session** (so judges don’t overwrite each other in demo booths)
 - **Demo mode** — works without Firebase for local previews (Member / Officer / Admin)
 
 ## Quick Start
@@ -40,36 +53,40 @@ Without Firebase configured, use **Try Demo** on the landing page.
 2. [vercel.com](https://vercel.com) → Import project
 3. Framework preset: **Vite**
 4. Add all variables from `.env.example` in **Environment Variables**
-5. Deploy → copy your `https://*.vercel.app` URL
+5. Deploy → copy your `https://*.vercel.app` URL into this README
 
 Add the Vercel domain to Firebase authorized domains before sharing with judges.
 
 ## Demo Script (for judges)
 
-1. Open your live URL → **Sign in with Google** (or Try Demo)
-2. **Dashboard** — note rank, points, and activity feed
-3. **Events** → Register for **State Leadership Conference** → +50 points, achievements may unlock
-4. **Competitions** → Enter an event, set placement → leaderboard updates with your name
-5. **Achievements** — view unlocked badges and point rules
-6. **Profile** — (admin only) Reset demo data before your presentation
+1. Open your live URL (or localhost) → scroll the homepage, try both themes
+2. **Try Demo → Member** (or Sign in with Google)
+3. **Dashboard** — note rank, points, and activity feed
+4. **Events** → Register for **State Leadership Conference** → +50 points, achievements may unlock
+5. **Competitions** → Enter an event, set placement → leaderboard updates with your name
+6. **Achievements** — view unlocked badges and point rules
+7. **View landing** in the sidebar to show the homepage again
+8. **Profile** — (admin only) Reset demo data before your presentation
 
 ## Tech Stack
 
 - Vite + React 19 + TypeScript
 - Tailwind CSS v4
 - Firebase Auth (Google)
-- localStorage (per-user + shared chapter state)
+- localStorage (per-user profile + per-tab-session chapter state)
 - Recharts, Radix UI, Sonner
 
 ## Project Structure
 
 ```
 src/
-  pages/          Landing, Dashboard, Events, Competitions, Achievements, Profile
-  contexts/       AuthContext, DataContext
-  lib/            firebase, storage, points
+  pages/          HomePage, Dashboard, Events, Competitions, Achievements, Profile
+  contexts/       AuthProvider, DataProvider, ThemeProvider
+  hooks/          useAuth, useData, useTheme
+  lib/            firebase, storage, points, demo-session, themes
   data/seed.ts    Chapter seed data
-  components/     layout, dashboard, events, ui
+  components/     layout, dashboard, branding, ui
+public/branding/  FBLA and Marvin Ridge logos
 ```
 
 ## Environment Variables
@@ -80,3 +97,12 @@ src/
 | `VITE_ADMIN_EMAILS` | Comma-separated admin emails |
 | `VITE_OFFICER_EMAILS` | Comma-separated officer emails |
 | `VITE_CHAPTER_NAME` | Chapter name on landing + sidebar |
+
+## Quality checks
+
+```bash
+npm run build
+npm run lint
+```
+
+Both should pass before sharing with judges.

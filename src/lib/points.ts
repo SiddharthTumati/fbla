@@ -83,17 +83,15 @@ export function recalculateProfile(
   const lastHistory = profile.pointsHistory[profile.pointsHistory.length - 1]
   const today = new Date().toISOString().slice(0, 10)
   const lastDate = lastHistory?.date.slice(0, 10)
-  let pointsHistory = profile.pointsHistory
-  if (lastDate !== today) {
-    pointsHistory = [
-      ...profile.pointsHistory.slice(-11),
-      { date: new Date().toISOString(), points },
-    ]
-  } else {
-    pointsHistory = profile.pointsHistory.map((h, i) =>
-      i === profile.pointsHistory.length - 1 ? { ...h, points } : h,
-    )
-  }
+  const pointsHistory =
+    lastDate !== today
+      ? [
+          ...profile.pointsHistory.slice(-11),
+          { date: new Date().toISOString(), points },
+        ]
+      : profile.pointsHistory.map((h, i) =>
+          i === profile.pointsHistory.length - 1 ? { ...h, points } : h,
+        )
 
   return {
     ...profile,

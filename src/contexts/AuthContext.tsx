@@ -1,7 +1,6 @@
 import {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -35,7 +34,12 @@ interface AuthContextValue {
   signOut: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+export const AuthContext = createContext<AuthContextValue | null>(null)
+
+function readDemoUser(): AuthUser | null {
+  const saved = sessionStorage.getItem('fbla:demo-user')
+  return saved ? (JSON.parse(saved) as AuthUser) : null
+}
 
 function resolveRole(email: string): UserRole {
   const normalized = email.toLowerCase()
@@ -57,17 +61,14 @@ function mapFirebaseUser(fbUser: User): AuthUser {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [loading, setLoading] = useState(true)
   const firebaseEnabled = isFirebaseConfigured()
+  const [user, setUser] = useState<AuthUser | null>(() =>
+    firebaseEnabled ? null : readDemoUser(),
+  )
+  const [loading, setLoading] = useState(() => firebaseEnabled)
 
   useEffect(() => {
-    if (!firebaseEnabled) {
-      const saved = sessionStorage.getItem('fbla:demo-user')
-      if (saved) setUser(JSON.parse(saved) as AuthUser)
-      setLoading(false)
-      return
-    }
+    if (!firebaseEnabled) return
 
     return subscribeAuth((fbUser) => {
       if (fbUser) {
@@ -110,10 +111,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
 }

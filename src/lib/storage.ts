@@ -1,23 +1,32 @@
 import { createInitialProfile, createSeedChapter } from '@/data/seed'
+import { chapterStorageKey, clearDemoSession } from '@/lib/demo-session'
 import { recalculateProfile } from '@/lib/points'
 import type { AppData, ChapterEvent, MemberProfile, UserRole } from '@/types'
 
-const CHAPTER_KEY = 'fbla:chapter'
+const LEGACY_CHAPTER_KEY = 'fbla:chapter'
 const profileKey = (uid: string) => `fbla:${uid}:profile`
 const initializedKey = (uid: string) => `fbla:${uid}:initialized`
 
 export function getChapter(): ReturnType<typeof createSeedChapter> {
-  const raw = localStorage.getItem(CHAPTER_KEY)
+  const key = chapterStorageKey()
+  let raw = localStorage.getItem(key)
+  if (!raw) {
+    const legacy = localStorage.getItem(LEGACY_CHAPTER_KEY)
+    if (legacy) {
+      localStorage.setItem(key, legacy)
+      raw = legacy
+    }
+  }
   if (!raw) {
     const seed = createSeedChapter()
-    localStorage.setItem(CHAPTER_KEY, JSON.stringify(seed))
+    localStorage.setItem(key, JSON.stringify(seed))
     return seed
   }
   return JSON.parse(raw) as ReturnType<typeof createSeedChapter>
 }
 
 export function saveChapter(chapter: ReturnType<typeof createSeedChapter>): void {
-  localStorage.setItem(CHAPTER_KEY, JSON.stringify(chapter))
+  localStorage.setItem(chapterStorageKey(), JSON.stringify(chapter))
   window.dispatchEvent(new Event('fbla-storage'))
 }
 
@@ -130,7 +139,7 @@ export function enterCompetition(
   if (placement) placements[competitionId] = placement
   else delete placements[competitionId]
 
-  let updatedProfile = recalculateProfile(
+  const updatedProfile = recalculateProfile(
     { ...profile, enteredCompetitionIds: entered, competitionPlacements: placements },
     chapter.events,
   )
@@ -215,7 +224,8 @@ export function resetDemoData(
   role: UserRole,
   photoURL?: string,
 ): AppData {
-  localStorage.removeItem(CHAPTER_KEY)
+  localStorage.removeItem(chapterStorageKey())
+  localStorage.removeItem(LEGACY_CHAPTER_KEY)
   localStorage.removeItem(profileKey(uid))
   localStorage.removeItem(initializedKey(uid))
   return initializeUser(uid, displayName, email, role, photoURL)
@@ -224,5 +234,6 @@ export function resetDemoData(
 export function resetAllDemo(): void {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith('fbla:'))
   keys.forEach((k) => localStorage.removeItem(k))
+  clearDemoSession()
   window.dispatchEvent(new Event('fbla-storage'))
 }

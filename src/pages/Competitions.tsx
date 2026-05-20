@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Medal, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { useData } from '@/contexts/DataContext'
+import { useData } from '@/hooks/useData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +16,7 @@ export function Competitions() {
   if (loading || !data) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
       </div>
     )
   }

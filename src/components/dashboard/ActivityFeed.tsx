@@ -21,12 +21,12 @@ export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
           const Icon = icons[item.type]
           return (
             <div key={item.id} className="flex gap-3">
-              <div className="mt-0.5 rounded-lg bg-navy-800 p-2">
-                <Icon className="h-4 w-4 text-gold-400" />
+              <div className="mt-0.5 rounded-lg bg-[var(--surface-muted)] p-2">
+                <Icon className="h-4 w-4 text-[var(--brand-accent)]" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-slate-300">{item.message}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{formatDate(item.timestamp)}</p>
+                <p className="text-sm">{item.message}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">{formatDate(item.timestamp)}</p>
               </div>
             </div>
           )

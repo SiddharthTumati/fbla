@@ -17,7 +17,7 @@ import {
   Lock,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useData } from '@/contexts/DataContext'
+import { useData } from '@/hooks/useData'
 import { ACHIEVEMENTS } from '@/data/seed'
 import { POINT_RULES } from '@/lib/points'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,7 +69,7 @@ export function Achievements() {
   if (loading || !data) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
       </div>
     )
   }

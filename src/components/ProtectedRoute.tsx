@@ -1,18 +1,20 @@
+import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
+import { DataProvider } from '@/contexts/DataContext'
+import { useAuth } from '@/hooks/useAuth'
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-navy-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
+      <div className="themed-portal flex min-h-screen items-center justify-center bg-[var(--surface-base)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
       </div>
     )
   }
 
-  if (!user) return <Navigate to="/" replace />
+  if (!user) return <Navigate to={{ pathname: '/', hash: 'portal-cta' }} replace />
 
-  return <>{children}</>
+  return <DataProvider key={user.uid}>{children}</DataProvider>
 }

@@ -1,13 +1,13 @@
 import {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import type { AuthUser } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import {
   addEvent,
   enterCompetition,
@@ -32,40 +32,27 @@ interface DataContextValue {
   rank: number
 }
 
-const DataContext = createContext<DataContextValue | null>(null)
+export const DataContext = createContext<DataContextValue | null>(null)
+
+function loadUserData(user: AuthUser): AppData {
+  return (
+    loadAppData(user.uid) ??
+    initializeUser(user.uid, user.displayName, user.email, user.role, user.photoURL)
+  )
+}
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [data, setData] = useState<AppData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<AppData | null>(() => (user ? loadUserData(user) : null))
+  const [loading] = useState(false)
 
   const refresh = useCallback(() => {
     if (!user) {
       setData(null)
-      setLoading(false)
       return
     }
-    const existing = loadAppData(user.uid)
-    if (existing) {
-      setData(existing)
-    } else {
-      setData(
-        initializeUser(
-          user.uid,
-          user.displayName,
-          user.email,
-          user.role,
-          user.photoURL,
-        ),
-      )
-    }
-    setLoading(false)
+    setData(loadUserData(user))
   }, [user])
-
-  useEffect(() => {
-    setLoading(true)
-    refresh()
-  }, [refresh])
 
   useEffect(() => {
     const onStorage = () => refresh()
@@ -160,10 +147,4 @@ export function DataProvider({ children }: { children: ReactNode }) {
   )
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
-}
-
-export function useData() {
-  const ctx = useContext(DataContext)
-  if (!ctx) throw new Error('useData must be used within DataProvider')
-  return ctx
 }
