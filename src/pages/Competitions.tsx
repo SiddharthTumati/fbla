@@ -11,6 +11,12 @@ import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PortalPage } from '@/components/layout/PortalPage'
 
+const PLACEMENTS = [
+  { value: 1 as const, label: '1st' },
+  { value: 2 as const, label: '2nd' },
+  { value: 3 as const, label: '3rd' },
+]
+
 export function Competitions() {
   const { data, loading, enterComp, rank } = useData()
   const [selectedPlacement, setSelectedPlacement] = useState<Record<string, 1 | 2 | 3 | undefined>>({})
@@ -65,6 +71,8 @@ export function Competitions() {
             {chapter.competitions.map((comp) => {
               const entered = profile.enteredCompetitionIds.includes(comp.id)
               const placement = profile.competitionPlacements[comp.id]
+              const selected = selectedPlacement[comp.id]
+
               return (
                 <Card key={comp.id} className="flex flex-col">
                   <CardHeader>
@@ -83,24 +91,39 @@ export function Competitions() {
                         {placement && ` — ${placement}${placement === 1 ? 'st' : placement === 2 ? 'nd' : 'rd'} place`}
                       </p>
                     )}
-                    <div className="flex gap-2">
-                      {([1, 2, 3] as const).map((p) => (
-                        <Button
-                          key={p}
-                          size="sm"
-                          variant={selectedPlacement[comp.id] === p ? 'default' : 'outline'}
-                          onClick={() =>
-                            setSelectedPlacement((s) => ({
-                              ...s,
-                              [comp.id]: s[comp.id] === p ? undefined : p,
-                            }))
-                          }
-                        >
-                          {p === 1 ? '1st' : p === 2 ? '2nd' : '3rd'}
-                        </Button>
-                      ))}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                        Placement (optional)
+                      </p>
+                      <div className="flex flex-wrap gap-2" role="group" aria-label="Select placement">
+                        {PLACEMENTS.map(({ value, label }) => (
+                          <button
+                            key={value}
+                            type="button"
+                            disabled={entered && !!placement}
+                            className={cn(
+                              'portal-placement-pill',
+                              `portal-placement-pill--${value}`,
+                            )}
+                            data-selected={selected === value ? 'true' : 'false'}
+                            aria-pressed={selected === value}
+                            onClick={() =>
+                              setSelectedPlacement((s) => ({
+                                ...s,
+                                [comp.id]: s[comp.id] === value ? undefined : value,
+                              }))
+                            }
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <Button className="w-full" onClick={() => handleEnter(comp.id)}>
+                    <Button
+                      variant={entered ? 'outline' : 'primary'}
+                      className="w-full"
+                      onClick={() => handleEnter(comp.id)}
+                    >
                       {entered ? 'Update Entry' : 'Enter Competition'}
                     </Button>
                   </CardContent>
@@ -147,7 +170,7 @@ export function Competitions() {
                       >
                         {entry.rank}
                       </span>
-                      <Avatar className="h-9 w-9 border border-[var(--border-default)]">
+                      <Avatar className="h-9 w-9 border border-[rgba(255,255,255,0.08)]">
                         <AvatarFallback className="text-xs font-semibold">
                           {entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>

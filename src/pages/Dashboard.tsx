@@ -28,6 +28,7 @@ export function Dashboard() {
   return (
     <PortalPage>
       <PageHeader
+        spacious
         title="Dashboard"
         description="Your chapter activity, points, and upcoming events at a glance."
       />
@@ -59,28 +60,66 @@ export function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="lg:col-span-2">
           <PointsChart history={profile.pointsHistory} />
+        </div>
+
+        <div className="flex flex-col gap-5 lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-3">
-              <Link to="/events" className="portal-quick-link">
-                Register for Event <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link to="/competitions" className="portal-quick-link portal-quick-link--secondary">
-                View Leaderboard
-              </Link>
-              <Link to="/achievements" className="portal-quick-link portal-quick-link--ghost">
-                Achievements
-              </Link>
+            <CardContent>
+              <nav className="portal-quick-actions" aria-label="Quick actions">
+                <Link to="/events" className="portal-quick-link">
+                  Register for Event <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link to="/competitions" className="portal-quick-link portal-quick-link--ghost">
+                  View Leaderboard
+                </Link>
+                <Link to="/achievements" className="portal-quick-link portal-quick-link--ghost">
+                  Achievements
+                </Link>
+              </nav>
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="lg:col-span-2">
+          {upcoming.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Events</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="divide-y divide-[rgba(255,255,255,0.06)]">
+                  {upcoming.slice(0, 3).map((e) => (
+                    <li key={e.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                      <div>
+                        <p className="font-medium text-[var(--text-primary)]">{e.title}</p>
+                        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                          {new Date(e.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                      <Link to="/events" className="portal-quick-link !w-auto shrink-0 !py-2 !px-4 text-xs">
+                        Register
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-5 lg:col-span-1">
           <ActivityFeed activities={chapter.activities} />
           <Card>
             <CardHeader>
@@ -103,31 +142,6 @@ export function Dashboard() {
           </Card>
         </div>
       </div>
-
-      {upcoming.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="divide-y divide-[var(--border-default)]">
-              {upcoming.slice(0, 3).map((e) => (
-                <li key={e.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)]">{e.title}</p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                  </div>
-                  <Link to="/events" className="portal-quick-link !py-2 !px-4 text-xs shrink-0">
-                    Register
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
     </PortalPage>
   )
 }

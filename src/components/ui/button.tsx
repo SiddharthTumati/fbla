@@ -8,14 +8,19 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        /** Single highest-priority CTA per view — solid amber */
+        primary:
+          'bg-[var(--brand-accent)] text-[var(--btn-primary-text)] hover:bg-[var(--brand-accent-hover)] shadow-md shadow-black/15',
+        /** Default actions — outline, fills on hover */
         default:
-          'bg-[var(--brand-accent)] text-[var(--btn-primary-text)] hover:opacity-90 shadow-lg shadow-black/10',
+          'border border-[color-mix(in_srgb,var(--brand-accent)_50%,transparent)] bg-transparent text-[var(--brand-accent)] hover:bg-[var(--brand-accent)] hover:text-[var(--btn-primary-text)] hover:border-[var(--brand-accent)]',
         secondary:
-          'bg-[var(--surface-muted)] text-[var(--text-primary)] hover:opacity-90 border border-[var(--border-default)]',
+          'border border-[rgba(255,255,255,0.1)] bg-transparent text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--surface-muted)_55%,transparent)]',
         outline:
-          'border border-[var(--border-default)] bg-transparent hover:bg-[var(--surface-muted)] text-[var(--text-primary)]',
-        ghost: 'hover:bg-[var(--surface-muted)] text-[var(--text-muted)] hover:text-[var(--text-primary)]',
-        destructive: 'bg-red-600 text-white hover:bg-red-500',
+          'border border-[rgba(255,255,255,0.1)] bg-transparent text-[var(--text-muted)] hover:border-[color-mix(in_srgb,var(--brand-accent)_40%,transparent)] hover:text-[var(--brand-accent)]',
+        ghost:
+          'bg-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-muted)_40%,transparent)] hover:text-[var(--text-primary)]',
+        destructive: 'bg-red-600/90 text-white hover:bg-red-500 border border-red-500/30',
       },
       size: {
         default: 'h-10 px-4 py-2',

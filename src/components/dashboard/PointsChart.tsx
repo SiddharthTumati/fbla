@@ -24,7 +24,7 @@ export function PointsChart({ history }: { history: MemberProfile['pointsHistory
         <CardTitle>Points Over Time</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[220px] w-full">
+        <div className="h-[min(280px,42vh)] w-full min-h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data}>
               <defs>

@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useData } from '@/hooks/useData'
 import { EventCard } from '@/components/events/EventCard'
+import { EventHeroBanner } from '@/components/events/EventHeroBanner'
+import { getNextUpcomingEvent } from '@/lib/events'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -71,6 +73,32 @@ export function Events() {
     setForm({ title: '', description: '', date: '', location: '', capacity: '40', category: 'workshop' })
   }
 
+  const renderEventGrid = (events: ChapterEvent[], heroId?: string | null) => {
+    const gridEvents = heroId ? events.filter((e) => e.id !== heroId) : events
+    if (gridEvents.length === 0 && !heroId) {
+      return <p className="portal-empty">No events in this category.</p>
+    }
+    return (
+      <>
+        {gridEvents.length > 0 && (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {gridEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                isRegistered={profile.registeredEventIds.includes(event.id)}
+                onRegister={() => handleRegister(event.id)}
+              />
+            ))}
+          </div>
+        )}
+        {gridEvents.length === 0 && heroId && (
+          <p className="portal-empty mt-6">No other events in this category.</p>
+        )}
+      </>
+    )
+  }
+
   return (
     <PortalPage>
       <PageHeader
@@ -80,11 +108,11 @@ export function Events() {
           canManage ? (
             <Dialog open={manageOpen} onOpenChange={setManageOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button variant="outline">
                   <Plus className="h-4 w-4" /> Add Event
                 </Button>
               </DialogTrigger>
-              <DialogContent className="portal-card border-[var(--border-default)] bg-[var(--surface-raised)]">
+              <DialogContent className="portal-card border-[rgba(255,255,255,0.08)] bg-[color-mix(in_srgb,var(--surface-raised)_55%,transparent)]">
                 <DialogHeader>
                   <DialogTitle className="portal-card-title">Create Event</DialogTitle>
                 </DialogHeader>
@@ -112,7 +140,7 @@ export function Events() {
                   <div>
                     <Label>Category</Label>
                     <select
-                      className="flex h-10 w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 text-sm text-[var(--text-primary)]"
+                      className="flex h-10 w-full rounded-lg border border-[rgba(255,255,255,0.1)] bg-[color-mix(in_srgb,var(--surface-muted)_50%,transparent)] px-3 text-sm text-[var(--text-primary)]"
                       value={form.category}
                       onChange={(e) => setForm({ ...form, category: e.target.value as ChapterEvent['category'] })}
                     >
@@ -122,7 +150,9 @@ export function Events() {
                       <option value="deadline">Deadline</option>
                     </select>
                   </div>
-                  <Button onClick={handleCreate}>Create Event</Button>
+                  <Button variant="outline" onClick={handleCreate}>
+                    Create Event
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -137,20 +167,35 @@ export function Events() {
           <TabsTrigger value="past">Past</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
-        {(['upcoming', 'registered', 'past', 'all'] as const).map((tab) => (
+
+        <TabsContent value="upcoming" className="space-y-8">
+          {(() => {
+            const upcoming = filterEvents('upcoming')
+            const hero = getNextUpcomingEvent(upcoming)
+            if (upcoming.length === 0) {
+              return <p className="portal-empty">No events in this category.</p>
+            }
+            return (
+              <>
+                {hero && (
+                  <EventHeroBanner
+                    event={hero}
+                    isRegistered={profile.registeredEventIds.includes(hero.id)}
+                    onRegister={() => handleRegister(hero.id)}
+                  />
+                )}
+                {renderEventGrid(upcoming, hero?.id ?? null)}
+              </>
+            )
+          })()}
+        </TabsContent>
+
+        {(['registered', 'past', 'all'] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {filterEvents(tab).map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  isRegistered={profile.registeredEventIds.includes(event.id)}
-                  onRegister={() => handleRegister(event.id)}
-                />
-              ))}
-            </div>
-            {filterEvents(tab).length === 0 && (
+            {filterEvents(tab).length === 0 ? (
               <p className="portal-empty">No events in this category.</p>
+            ) : (
+              renderEventGrid(filterEvents(tab))
             )}
           </TabsContent>
         ))}

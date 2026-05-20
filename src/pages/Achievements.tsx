@@ -85,7 +85,7 @@ export function Achievements() {
           <CardTitle>Point Rules</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="grid gap-3 sm:grid-cols-2 text-sm">
+          <ul className="grid gap-3 text-sm sm:grid-cols-2">
             {[
               ['Event registration', POINT_RULES.eventRegister],
               ['Early registration (30+ days)', POINT_RULES.earlyRegister],
@@ -94,7 +94,10 @@ export function Achievements() {
               ['2nd place', POINT_RULES.placement2],
               ['3rd place', POINT_RULES.placement3],
             ].map(([label, pts]) => (
-              <li key={label} className="flex justify-between gap-4 rounded-lg bg-[var(--surface-muted)]/40 px-3 py-2">
+              <li
+                key={label}
+                className="flex justify-between gap-4 rounded-lg border border-[rgba(255,255,255,0.05)] bg-[color-mix(in_srgb,var(--surface-muted)_30%,transparent)] px-3 py-2"
+              >
                 <span className="text-[var(--text-muted)]">{label}</span>
                 <span className="font-semibold text-[var(--brand-accent)]">+{pts}</span>
               </li>
@@ -114,36 +117,36 @@ export function Achievements() {
               key={achievement.id}
               className={cn(
                 'transition-all duration-300',
-                isUnlocked && 'portal-achievement--unlocked achievement-unlock',
+                isUnlocked ? 'portal-achievement--unlocked' : 'portal-achievement--locked',
               )}
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   <div
                     className={cn(
-                      'rounded-xl p-3',
-                      isUnlocked ? 'portal-stat-icon' : 'bg-[var(--surface-muted)]/80',
+                      'portal-achievement-icon rounded-xl p-3',
+                      isUnlocked ? 'portal-stat-icon' : 'bg-[color-mix(in_srgb,var(--surface-muted)_40%,transparent)]',
                     )}
                   >
                     {isUnlocked ? (
                       <Icon className="h-6 w-6 text-[var(--brand-accent)]" strokeWidth={1.75} />
                     ) : (
-                      <Lock className="h-6 w-6 text-[var(--text-muted)]" />
+                      <Lock className="h-6 w-6 text-[var(--text-muted)]" strokeWidth={1.75} />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3
                       className={cn(
                         'font-semibold',
-                        isUnlocked ? 'text-[var(--brand-accent)]' : 'text-[var(--text-primary)]',
+                        isUnlocked ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)]',
                       )}
                     >
                       {achievement.title}
                     </h3>
                     <p className="mt-1 text-sm text-[var(--text-muted)]">{achievement.description}</p>
-                    {!isUnlocked && <Progress value={progress} className="mt-3 h-1.5" />}
+                    {!isUnlocked && <Progress value={progress} className="mt-3 h-1.5 opacity-80" />}
                     {isUnlocked && (
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
                         Unlocked
                       </p>
                     )}
