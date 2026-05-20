@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --color-navy-950: #0a0f1a;
+  --color-navy-900: #0f172a;
+  --color-navy-800: #1e293b;
+  --color-gold-500: #f59e0b;
+  --color-gold-400: #fbbf24;
+}
+
+@layer base {
+  * {
+    @apply border-slate-800;
+  }
+  body {
+    @apply bg-navy-950 text-slate-200 font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+  #root {
+    min-height: 100vh;
+  }
+}
+
+.light body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.light * {
+  @apply border-slate-200;
+}
+
+@keyframes achievementPop {
+  0% { transform: scale(0.98); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.achievement-unlock {
+  animation: achievementPop 0.4s ease-out;
+}
