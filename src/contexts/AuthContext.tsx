@@ -6,14 +6,22 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { User } from 'firebase/auth'
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
 import {
-  isFirebaseConfigured,
+  getSession,
+  isAuthConfigured,
+  isEmailProvider,
+  mapAuthUser,
+  onAuthStateChange,
+  resetPasswordForEmail,
+  signInWithEmail,
   signInWithGoogle,
-  signOut as firebaseSignOut,
-  subscribeAuth,
-} from '@/lib/firebase'
-import { parseEmails } from '@/lib/utils'
+  signOut as authSignOut,
+  signUpWithEmail,
+  updatePassword,
+} from '@/lib/auth'
+import { ensureMemberProfile, sbGetMemberProfile } from '@/lib/supabase-store'
+import { resolveRoleForUser } from '@/lib/member-profile'
 import type { UserRole } from '@/types'
 
 export interface AuthUser {
@@ -23,71 +31,117 @@ export interface AuthUser {
   photoURL?: string
   role: UserRole
   isDemo?: boolean
+  authProvider?: string
 }
 
 interface AuthContextValue {
   user: AuthUser | null
+  session: Session | null
   loading: boolean
-  firebaseEnabled: boolean
+  authConfigured: boolean
+  signUp: (email: string, password: string, displayName: string) => Promise<void>
+  signInWithEmail: (email: string, password: string) => Promise<void>
   signInGoogle: () => Promise<void>
+  resetPassword: (email: string) => Promise<void>
+  updatePassword: (password: string) => Promise<void>
   signInDemo: (role?: UserRole) => void
   signOut: () => Promise<void>
+  canChangePassword: boolean
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
+
+const DEMO_ENABLED = import.meta.env.VITE_ENABLE_DEMO !== 'false'
 
 function readDemoUser(): AuthUser | null {
   const saved = sessionStorage.getItem('fbla:demo-user')
   return saved ? (JSON.parse(saved) as AuthUser) : null
 }
 
-function resolveRole(email: string): UserRole {
-  const normalized = email.toLowerCase()
-  const admins = parseEmails(import.meta.env.VITE_ADMIN_EMAILS)
-  const officers = parseEmails(import.meta.env.VITE_OFFICER_EMAILS)
-  if (admins.includes(normalized)) return 'admin'
-  if (officers.includes(normalized)) return 'officer'
-  return 'member'
-}
-
-function mapFirebaseUser(fbUser: User): AuthUser {
+async function mapSessionToAuthUser(
+  sessionUser: SupabaseUser,
+): Promise<AuthUser> {
+  const base = mapAuthUser(sessionUser)
+  let profile = await sbGetMemberProfile(sessionUser.id)
+  if (!profile) {
+    profile = await ensureMemberProfile(
+      base.uid,
+      base.displayName,
+      base.email,
+      'member',
+      base.photoURL,
+    )
+  }
   return {
-    uid: fbUser.uid,
-    email: fbUser.email ?? '',
-    displayName: fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Member',
-    photoURL: fbUser.photoURL ?? undefined,
-    role: resolveRole(fbUser.email ?? ''),
+    uid: base.uid,
+    email: base.email,
+    displayName: profile.displayName,
+    photoURL: profile.photoURL ?? base.photoURL,
+    role: resolveRoleForUser(base.email, profile.role),
+    authProvider: base.provider,
   }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const firebaseEnabled = isFirebaseConfigured()
+  const authConfigured = isAuthConfigured()
+  const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<AuthUser | null>(() =>
-    firebaseEnabled ? null : readDemoUser(),
+    authConfigured ? null : readDemoUser(),
   )
-  const [loading, setLoading] = useState(() => firebaseEnabled)
+  const [loading, setLoading] = useState(() => authConfigured)
+
+  const applySession = useCallback(async (next: Session | null) => {
+    setSession(next)
+    if (next?.user) {
+      const mapped = await mapSessionToAuthUser(next.user)
+      setUser(mapped)
+      sessionStorage.removeItem('fbla:demo-user')
+    } else {
+      setUser(readDemoUser())
+    }
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
-    if (!firebaseEnabled) return
+    if (!authConfigured) return
 
-    return subscribeAuth((fbUser) => {
-      if (fbUser) {
-        setUser(mapFirebaseUser(fbUser))
-        sessionStorage.removeItem('fbla:demo-user')
-      } else {
-        const saved = sessionStorage.getItem('fbla:demo-user')
-        setUser(saved ? (JSON.parse(saved) as AuthUser) : null)
-      }
-      setLoading(false)
+    getSession().then((s) => applySession(s))
+
+    return onAuthStateChange((_event, next) => {
+      void applySession(next)
     })
-  }, [firebaseEnabled])
+  }, [authConfigured, applySession])
+
+  const signUp = useCallback(
+    async (email: string, password: string, displayName: string) => {
+      const s = await signUpWithEmail(email, password, displayName)
+      if (s) await applySession(s)
+    },
+    [applySession],
+  )
+
+  const signInWithEmailHandler = useCallback(
+    async (email: string, password: string) => {
+      const s = await signInWithEmail(email, password)
+      if (s) await applySession(s)
+    },
+    [applySession],
+  )
 
   const signInGoogle = useCallback(async () => {
-    const fbUser = await signInWithGoogle()
-    setUser(mapFirebaseUser(fbUser))
+    await signInWithGoogle()
+  }, [])
+
+  const resetPassword = useCallback(async (email: string) => {
+    await resetPasswordForEmail(email)
+  }, [])
+
+  const updatePasswordHandler = useCallback(async (password: string) => {
+    await updatePassword(password)
   }, [])
 
   const signInDemo = useCallback((role: UserRole = 'member') => {
+    if (!DEMO_ENABLED) return
     const demoUser: AuthUser = {
       uid: `demo-${role}`,
       email: role === 'admin' ? 'admin@fbla.demo' : role === 'officer' ? 'officer@fbla.demo' : 'member@fbla.demo',
@@ -97,17 +151,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     sessionStorage.setItem('fbla:demo-user', JSON.stringify(demoUser))
     setUser(demoUser)
+    setSession(null)
   }, [])
 
   const signOut = useCallback(async () => {
     sessionStorage.removeItem('fbla:demo-user')
     setUser(null)
-    if (firebaseEnabled) await firebaseSignOut()
-  }, [firebaseEnabled])
+    setSession(null)
+    if (authConfigured) await authSignOut()
+  }, [authConfigured])
+
+  const canChangePassword = Boolean(session?.user && isEmailProvider(session.user))
 
   const value = useMemo(
-    () => ({ user, loading, firebaseEnabled, signInGoogle, signInDemo, signOut }),
-    [user, loading, firebaseEnabled, signInGoogle, signInDemo, signOut],
+    () => ({
+      user,
+      session,
+      loading,
+      authConfigured,
+      signUp,
+      signInWithEmail: signInWithEmailHandler,
+      signInGoogle,
+      resetPassword,
+      updatePassword: updatePasswordHandler,
+      signInDemo,
+      signOut,
+      canChangePassword,
+    }),
+    [
+      user,
+      session,
+      loading,
+      authConfigured,
+      signUp,
+      signInWithEmailHandler,
+      signInGoogle,
+      resetPassword,
+      updatePasswordHandler,
+      signInDemo,
+      signOut,
+      canChangePassword,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

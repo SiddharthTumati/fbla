@@ -14,10 +14,13 @@ import { PortalPage } from '@/components/layout/PortalPage'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export function Profile() {
-  const { user } = useAuth()
+  const { user, canChangePassword, updatePassword } = useAuth()
   const { config } = useTheme()
-  const { data, loading, setDisplayName, resetDemo } = useData()
+  const { data, loading, storageBackend, setDisplayName, resetDemo } = useData()
   const [name, setName] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
 
   if (loading || !data || !user) return <PortalPage loading />
 
@@ -30,6 +33,28 @@ export function Profile() {
     toast.success('Display name updated')
   }
 
+  const handlePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    setPasswordLoading(true)
+    try {
+      await updatePassword(newPassword)
+      setNewPassword('')
+      setConfirmPassword('')
+      toast.success('Password updated')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not update password')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   const handleReset = () => {
     resetDemo()
     toast.success('Demo data reset to defaults')
@@ -40,7 +65,7 @@ export function Profile() {
 
   return (
     <PortalPage>
-      <PageHeader title="Profile" description="Manage your account, appearance, and demo data." />
+      <PageHeader title="Profile" description="Manage your account, appearance, and chapter data." />
 
       <div className="mx-auto max-w-2xl space-y-6">
         <Card>
@@ -71,9 +96,13 @@ export function Profile() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Display Name</CardTitle>
+            <CardTitle className="text-base">Account</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <Label>Email</Label>
+              <Input value={user.email} readOnly className="mt-2 opacity-80" />
+            </div>
             <div>
               <Label>Name shown on leaderboard</Label>
               <Input
@@ -82,9 +111,44 @@ export function Profile() {
                 className="mt-2"
               />
             </div>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave}>Save display name</Button>
           </CardContent>
         </Card>
+
+        {canChangePassword && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Change password</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="new-password">New password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirm-password">Confirm password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <Button onClick={handlePassword} disabled={passwordLoading}>
+                {passwordLoading ? 'Updating…' : 'Update password'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -106,10 +170,16 @@ export function Profile() {
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               {profile.points.toLocaleString()} total points · {profile.achievements.length} achievements
             </p>
+            <p className="mt-3 text-xs text-[var(--text-muted)]">
+              Data storage:{' '}
+              <span className="font-medium text-[var(--brand-accent)]">
+                {storageBackend === 'supabase' ? 'Supabase' : 'Browser (localStorage)'}
+              </span>
+            </p>
           </CardContent>
         </Card>
 
-        {profile.role === 'admin' && (
+        {user.isDemo && profile.role === 'admin' && (
           <Card className="border-amber-500/30">
             <CardHeader>
               <CardTitle className="text-base text-amber-400">Admin Tools</CardTitle>

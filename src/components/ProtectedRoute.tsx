@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     )
   }
 
-  if (!user) return <Navigate to="/" replace />
+  if (!user) return <Navigate to="/login" replace />
 
   return <DataProvider key={user.uid}>{children}</DataProvider>
 }

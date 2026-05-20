@@ -6,23 +6,24 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { AuthUser } from '@/contexts/AuthContext'
 import { useAuth } from '@/hooks/useAuth'
 import {
   addEvent,
   enterCompetition,
-  initializeUser,
-  loadAppData,
+  isSupabaseConfigured,
+  loadUserData,
   registerForEvent,
-  resetDemoData,
-  resetAllDemo,
+  resetDemo,
+  storageLabel,
   updateDisplayName,
-} from '@/lib/storage'
-import type { AppData, ChapterEvent, UserRole } from '@/types'
+} from '@/lib/data-store'
+import type { AppData, ChapterEvent } from '@/types'
+import { toast } from 'sonner'
 
 interface DataContextValue {
   data: AppData | null
   loading: boolean
+  storageBackend: 'supabase' | 'localStorage'
   registerEvent: (eventId: string) => void
   enterComp: (competitionId: string, placement?: 1 | 2 | 3) => void
   setDisplayName: (name: string) => void
@@ -34,94 +35,107 @@ interface DataContextValue {
 
 export const DataContext = createContext<DataContextValue | null>(null)
 
-function loadUserData(user: AuthUser): AppData {
-  return (
-    loadAppData(user.uid) ??
-    initializeUser(user.uid, user.displayName, user.email, user.role, user.photoURL)
-  )
-}
-
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [data, setData] = useState<AppData | null>(() => (user ? loadUserData(user) : null))
-  const [loading] = useState(false)
+  const [data, setData] = useState<AppData | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     if (!user) {
       setData(null)
+      setLoading(false)
       return
     }
-    setData(loadUserData(user))
+    setLoading(true)
+    try {
+      const next = await loadUserData(user)
+      setData(next)
+    } catch (e) {
+      console.error(e)
+      toast.error(e instanceof Error ? e.message : 'Failed to load chapter data')
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   useEffect(() => {
-    const onStorage = () => refresh()
+    const timer = window.setTimeout(() => {
+      void refresh()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [refresh])
+
+  useEffect(() => {
+    if (!user?.isDemo && isSupabaseConfigured()) return
+    const onStorage = () => void refresh()
     window.addEventListener('fbla-storage', onStorage)
     window.addEventListener('storage', onStorage)
     return () => {
       window.removeEventListener('fbla-storage', onStorage)
       window.removeEventListener('storage', onStorage)
     }
-  }, [refresh])
+  }, [refresh, user?.isDemo])
 
-  const registerEvent = useCallback(
-    (eventId: string) => {
+  const runMutation = useCallback(
+    async (fn: () => Promise<AppData | null>) => {
       if (!user) return
-      const updated = registerForEvent(user.uid, eventId)
-      if (updated) setData(updated)
+      try {
+        const updated = await fn()
+        if (updated) setData(updated)
+      } catch (e) {
+        console.error(e)
+        toast.error(e instanceof Error ? e.message : 'Save failed')
+      }
     },
     [user],
+  )
+
+  const registerEventHandler = useCallback(
+    (eventId: string) => {
+      if (!user) return
+      void runMutation(() => registerForEvent(user, eventId))
+    },
+    [user, runMutation],
   )
 
   const enterComp = useCallback(
     (competitionId: string, placement?: 1 | 2 | 3) => {
       if (!user) return
-      const updated = enterCompetition(user.uid, competitionId, placement)
-      if (updated) setData(updated)
+      void runMutation(() => enterCompetition(user, competitionId, placement))
     },
-    [user],
+    [user, runMutation],
   )
 
   const setDisplayName = useCallback(
     (name: string) => {
       if (!user) return
-      const updated = updateDisplayName(user.uid, name)
-      if (updated) setData(updated)
+      void runMutation(() => updateDisplayName(user, name))
     },
-    [user],
+    [user, runMutation],
   )
 
   const createEvent = useCallback(
     (event: Omit<ChapterEvent, 'id' | 'registeredIds'>) => {
       if (!user) return
-      const updated = addEvent(user.uid, event)
-      if (updated) setData(updated)
+      void runMutation(() => addEvent(user, event))
     },
-    [user],
+    [user, runMutation],
   )
 
-  const resetDemo = useCallback(() => {
+  const resetDemoHandler = useCallback(() => {
     if (!user) return
-    if (user.role === 'admin') {
-      resetAllDemo()
-      const updated = initializeUser(
-        user.uid,
-        user.displayName,
-        user.email,
-        user.role as UserRole,
-        user.photoURL,
-      )
-      setData(updated)
-    } else {
-      const updated = resetDemoData(
-        user.uid,
-        user.displayName,
-        user.email,
-        user.role,
-        user.photoURL,
-      )
-      setData(updated)
-    }
+    void (async () => {
+      setLoading(true)
+      try {
+        const updated = await resetDemo(user)
+        setData(updated)
+      } catch (e) {
+        console.error(e)
+        toast.error(e instanceof Error ? e.message : 'Reset failed')
+      } finally {
+        setLoading(false)
+      }
+    })()
   }, [user])
 
   const rank = useMemo(() => {
@@ -135,15 +149,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
     () => ({
       data,
       loading,
-      registerEvent,
+      storageBackend: storageLabel(),
+      registerEvent: registerEventHandler,
       enterComp,
       setDisplayName,
       createEvent,
-      resetDemo,
-      refresh,
+      resetDemo: resetDemoHandler,
+      refresh: () => void refresh(),
       rank,
     }),
-    [data, loading, registerEvent, enterComp, setDisplayName, createEvent, resetDemo, refresh, rank],
+    [
+      data,
+      loading,
+      registerEventHandler,
+      enterComp,
+      setDisplayName,
+      createEvent,
+      resetDemoHandler,
+      refresh,
+      rank,
+    ],
   )
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

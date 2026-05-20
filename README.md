@@ -6,7 +6,17 @@ A polished React web app for FBLA chapter information management — member dash
 
 ## Homepage (`/`)
 
-Full-screen cinematic photo collage hero with cross-fade transitions, headline, and a single **Enter Portal** CTA. Signed-in users return via **Landing Page** in the portal sidebar.
+Full-screen cinematic photo collage hero with cross-fade transitions, headline, and account CTAs (**Sign in**, **Create account**, **Google**). Judges can use **demo mode** when `VITE_ENABLE_DEMO=true`. Signed-in users return via **Landing Page** in the portal sidebar.
+
+## Auth routes
+
+| Route | Purpose |
+|-------|---------|
+| `/login` | Email sign-in + Google |
+| `/signup` | Register with email/password |
+| `/forgot-password` | Request password reset email |
+| `/auth/callback` | Google OAuth return |
+| `/auth/reset-password` | Set new password from email link |
 
 ## Themes (saved in browser)
 
@@ -27,70 +37,81 @@ Dashboard, Events, Competitions, Achievements, and Profile share a glass-card la
 - **Event registration** — one-click signup with points (+50, early bird +25)
 - **Competition tracker** — enter events, record placements, chapter leaderboard
 - **Achievements** — 15 unlockable badges with progress bars
-- **Google SSO** — Firebase Auth with officer/admin roles via env emails
-- **localStorage persistence** — member profile per account; chapter events/leaderboard per **browser tab session** (so judges don’t overwrite each other in demo booths)
-- **Demo mode** — works without Firebase for local previews (Member / Officer / Admin). Demo roles are for presentation only, not real security.
+- **Supabase Auth** — Google OAuth + email/password (sign up, sign in, forgot password)
+- **Persistence** — `localStorage` for demo; **Supabase Postgres** (`member_profiles` + shared `chapters` row) for real accounts
+- **Demo mode** — Member / Officer / Admin without Supabase (`VITE_ENABLE_DEMO`, default on for judges)
 
 ## Quick Start
 
 ```bash
 npm install
-cp .env.example .env   # add Firebase + your admin email
+cp .env.example .env.local   # add Supabase anon key + admin email
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173)
 
-Without Firebase configured, use **Enter Portal** on the landing page (demo member sign-in).
+**Sign in** or **Create account** when Supabase is configured. Otherwise use demo roles on the landing page.
 
-## Firebase Setup (~15 min)
+See [LOCALHOST.md](LOCALHOST.md) for Google OAuth and anon key setup.
 
-1. [Firebase Console](https://console.firebase.google.com) → Create project
-2. **Authentication** → Sign-in method → Enable **Google**
-3. **Project settings** → Your apps → Web app → Copy config into `.env`
-4. **Authentication** → Settings → Authorized domains → Add `localhost` and your Vercel domain (`*.vercel.app`)
-5. Set `VITE_ADMIN_EMAILS` to your Google email for admin tools
+## Supabase Setup (~10 min)
+
+Project: [cttncecgjgxrttvwqmuq](https://supabase.com/dashboard/project/cttncecgjgxrttvwqmuq)
+
+1. **SQL** → run [`supabase/schema.sql`](supabase/schema.sql) (or `npm run db:schema`)
+2. **Auth → Providers** → enable **Email** and **Google**
+3. **Auth → URL configuration** → Site URL `http://localhost:5173`; redirect URLs:
+   - `http://localhost:5173/auth/callback`
+   - `http://localhost:5173/auth/reset-password`
+4. **Settings → API** → copy **Project URL** and **anon public** key into `.env.local`:
+   - `VITE_SUPABASE_URL=https://cttncecgjgxrttvwqmuq.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY=...`
+5. Restart `npm run dev`
+
+**Postgres connection string** (`DATABASE_URL`) is for migrations and scripts only — never in `VITE_*` vars.
+
+Optional: `npm run db:migrate-profiles` to copy legacy `profiles.payload` JSON into `member_profiles`.
 
 ## Deploy to Vercel
 
 1. Push this repo to GitHub
 2. [vercel.com](https://vercel.com) → Import project
 3. Framework preset: **Vite**
-4. Add all variables from `.env.example` in **Environment Variables**
+4. Add variables from `.env.example` in **Environment Variables** (include production redirect URLs in Supabase)
 5. Deploy → copy your `https://*.vercel.app` URL into this README
 
-Add the Vercel domain to Firebase authorized domains before sharing with judges.
+Add your Vercel domain to Supabase redirect URLs before sharing with judges.
 
 ## Demo Script (for judges)
 
-1. Open your live URL (or localhost) → view the collage hero, switch themes in the portal
-2. **Enter Portal** (or Sign in with Google)
+1. Open your live URL (or localhost) → view the collage hero
+2. **Sign in** / **Create account** / **Google** — or **Enter Portal** (demo)
 3. **Dashboard** — note rank, points, and activity feed
-4. **Events** → Register for **State Leadership Conference** → +50 points, achievements may unlock
-5. **Competitions** → Enter an event, set placement → leaderboard updates with your name
-6. **Achievements** — view unlocked badges and point rules
-7. **Landing Page** in the sidebar to show the homepage again
-8. **Profile** — (admin only) Reset demo data before your presentation
+4. **Events** → Register for **State Leadership Conference** → +50 points
+5. **Competitions** → Enter an event, set placement → leaderboard updates
+6. **Achievements** — view unlocked badges
+7. **Profile** — change display name; email users can change password
+8. **Landing Page** in the sidebar to return home
 
 ## Tech Stack
 
 - Vite + React 19 + TypeScript
 - Tailwind CSS v4
-- Firebase Auth (Google)
-- localStorage (per-user profile + per-tab-session chapter state)
+- Supabase Auth + Postgres
+- localStorage (demo only)
 - Recharts, Radix UI, Sonner
 
 ## Project Structure
 
 ```
 src/
-  pages/          HomePage, Dashboard, Events, Competitions, Achievements, Profile
+  pages/          HomePage, Login, Signup, Dashboard, Events, Profile, …
   contexts/       AuthProvider, DataProvider, ThemeProvider
   hooks/          useAuth, useData, useTheme
-  lib/            firebase, storage, points, demo-session, themes
-  data/seed.ts    Chapter seed data
-  components/     layout, HeroCollage, dashboard, branding, ui
-  lib/collage.ts  Hero collage image paths
+  lib/            auth, supabase-store, data-store, member-profile, themes
+  components/auth AuthLayout (login/signup/forgot UI)
+  supabase/       schema.sql, migrations/
 public/branding/  Logos + collage/ (chapter photos)
 ```
 
@@ -98,10 +119,13 @@ public/branding/  Logos + collage/ (chapter photos)
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_FIREBASE_*` | Firebase web app config |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon public key |
+| `VITE_ENABLE_DEMO` | `true` (default) to show demo roles on landing |
 | `VITE_ADMIN_EMAILS` | Comma-separated admin emails |
 | `VITE_OFFICER_EMAILS` | Comma-separated officer emails |
 | `VITE_CHAPTER_NAME` | Chapter name on landing + sidebar |
+| `DATABASE_URL` | Postgres URL for SQL tools only (not bundled in the app) |
 
 ## Quality checks
 

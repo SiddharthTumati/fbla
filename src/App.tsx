@@ -16,6 +16,20 @@ const Achievements = lazy(() =>
   import('@/pages/Achievements').then((m) => ({ default: m.Achievements })),
 )
 const Profile = lazy(() => import('@/pages/Profile').then((m) => ({ default: m.Profile })))
+const AuthCallback = lazy(() =>
+  import('@/pages/AuthCallback').then((m) => ({ default: m.AuthCallback })),
+)
+const Login = lazy(() => import('@/pages/Login').then((m) => ({ default: m.Login })))
+const Signup = lazy(() => import('@/pages/Signup').then((m) => ({ default: m.Signup })))
+const ForgotPassword = lazy(() =>
+  import('@/pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })),
+)
+const ResetPassword = lazy(() =>
+  import('@/pages/ResetPassword').then((m) => ({ default: m.ResetPassword })),
+)
+const DevSetup = import.meta.env.DEV
+  ? lazy(() => import('@/pages/DevSetup').then((m) => ({ default: m.DevSetup })))
+  : null
 
 function PageLoader() {
   return (
@@ -40,6 +54,56 @@ function AppRoutes() {
           </SuspensePage>
         }
       />
+      <Route
+        path="/login"
+        element={
+          <SuspensePage>
+            <Login />
+          </SuspensePage>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <SuspensePage>
+            <Signup />
+          </SuspensePage>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <SuspensePage>
+            <ForgotPassword />
+          </SuspensePage>
+        }
+      />
+      <Route
+        path="/auth/callback"
+        element={
+          <SuspensePage>
+            <AuthCallback />
+          </SuspensePage>
+        }
+      />
+      <Route
+        path="/auth/reset-password"
+        element={
+          <SuspensePage>
+            <ResetPassword />
+          </SuspensePage>
+        }
+      />
+      {DevSetup && (
+        <Route
+          path="/dev/setup"
+          element={
+            <SuspensePage>
+              <DevSetup />
+            </SuspensePage>
+          }
+        />
+      )}
       <Route path="/portal" element={<Navigate to="/" replace />} />
       <Route path="/equilibrium" element={<Navigate to="/" replace />} />
       <Route
