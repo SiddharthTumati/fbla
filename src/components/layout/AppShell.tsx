@@ -10,6 +10,7 @@ import {
   Moon,
   Menu,
   X,
+  Home,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -50,25 +51,31 @@ export function AppShell() {
   const roleBadge = user?.role === 'admin' ? 'admin' : user?.role === 'officer' ? 'success' : 'secondary'
 
   return (
-    <div className="themed-portal flex min-h-screen bg-[var(--surface-base)]">
+    <div className="themed-portal flex min-h-screen" style={{ fontFamily: config.fonts.body }}>
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-[var(--border-default)] bg-[var(--surface-raised)]/95 backdrop-blur-xl transition-transform lg:static lg:translate-x-0',
+          'portal-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r backdrop-blur-xl transition-transform lg:static lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
         <div className="flex h-16 items-center gap-2 border-b border-[var(--border-default)] px-4">
           <BrandLogo size="sm" showText onDark={false} />
         </div>
-        <p className="px-4 pt-2 text-[10px] text-[var(--text-muted)] truncate">{config.chapterName}</p>
+        <p
+          className="px-4 pt-2 text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] truncate"
+          style={{ fontFamily: config.fonts.display }}
+        >
+          {config.chapterName}
+        </p>
 
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 space-y-0.5 p-3 pt-4">
           <Link
             to="/"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] transition-colors mb-2"
+            className="portal-nav-link mb-2 flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-muted)]/60 hover:text-[var(--text-primary)]"
           >
-            View landing
+            <Home className="h-5 w-5 shrink-0" />
+            Landing Page
           </Link>
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
@@ -77,78 +84,90 @@ export function AppShell() {
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'portal-nav-link flex items-center gap-3 px-3 py-2.5 text-sm transition-colors',
                   isActive
-                    ? 'bg-[var(--brand-accent)]/15 text-[var(--brand-accent)]'
-                    : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]',
+                    ? 'portal-nav-link--active'
+                    : 'font-medium text-[var(--text-muted)] hover:bg-[var(--surface-muted)]/60 hover:text-[var(--text-primary)]',
                 )
               }
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-5 w-5 shrink-0" />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t border-[var(--border-default)] p-4 space-y-3">
+        <div className="space-y-3 border-t border-[var(--border-default)] p-4">
           <ThemeSwitcher variant="portal" className="w-full justify-center" />
-          <div className="flex items-center gap-3 rounded-lg bg-[var(--surface-muted)]/50 p-3">
-            <Avatar>
+          <div className="portal-card flex items-center gap-3 !p-3">
+            <Avatar className="h-10 w-10 border border-[var(--border-default)]">
               <AvatarImage src={user?.photoURL} />
               <AvatarFallback>{user?.displayName?.[0] ?? 'M'}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{user?.displayName}</p>
-              <Badge variant={roleBadge} className="mt-1 capitalize">{user?.role}</Badge>
+              <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{user?.displayName}</p>
+              <Badge variant={roleBadge} className="mt-1 capitalize text-[10px]">
+                {user?.role}
+              </Badge>
             </div>
           </div>
           {data && (
             <p className="text-center text-xs text-[var(--text-muted)]">
-              <span className="text-brand font-semibold">{data.profile.points}</span> pts
+              <span className="font-semibold text-[var(--brand-accent)]" style={{ fontFamily: config.fonts.display }}>
+                {data.profile.points.toLocaleString()}
+              </span>{' '}
+              pts
             </p>
           )}
-          <Button variant="ghost" size="sm" className="w-full" onClick={handleSignOut}>
+          <Button variant="ghost" size="sm" className="w-full text-[var(--text-muted)]" onClick={handleSignOut}>
             <LogOut className="h-4 w-4" /> Sign out
           </Button>
         </div>
       </aside>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      <div className="flex flex-1 flex-col lg:pl-0">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--surface-base)]/80 px-4 backdrop-blur-xl lg:px-8">
+      <div className="flex min-h-screen flex-1 flex-col">
+        <header className="portal-header sticky top-0 z-20 flex h-14 items-center justify-between gap-4 border-b px-4 backdrop-blur-xl lg:px-8">
           <button
             type="button"
-            className="lg:hidden text-[var(--text-muted)]"
+            className="text-[var(--text-muted)] lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
-          <p className="text-sm text-[var(--text-muted)] hidden lg:block flex-1">
-            Welcome back, <span className="font-medium text-[var(--text-primary)]">{user?.displayName}</span>
+          <p className="hidden flex-1 text-sm text-[var(--text-muted)] lg:block">
+            Welcome back,{' '}
+            <span className="font-semibold text-[var(--text-primary)]" style={{ fontFamily: config.fonts.display }}>
+              {user?.displayName}
+            </span>
           </p>
-          <div className="hidden sm:block">
-            <ThemeSwitcher variant="portal" />
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-[var(--text-muted)]"
+            onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
+            aria-label="Toggle light mode"
+          >
             {colorMode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 lg:p-8 pb-24 lg:pb-8">
+        <main className="portal-main flex-1 overflow-auto p-4 pb-24 lg:p-8 lg:pb-8">
           <Outlet />
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-20 flex border-t border-[var(--border-default)] bg-[var(--surface-raised)]/95 backdrop-blur-xl lg:hidden">
+        <nav className="portal-sidebar fixed bottom-0 left-0 right-0 z-20 flex border-t backdrop-blur-xl lg:hidden">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-1 flex-col items-center gap-1 py-2 text-[10px]',
+                  'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors',
                   isActive ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)]',
                 )
               }

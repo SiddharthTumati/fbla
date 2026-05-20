@@ -15,6 +15,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ChapterEvent } from '@/types'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { PortalPage } from '@/components/layout/PortalPage'
 
 export function Events() {
   const { data, loading, registerEvent, createEvent } = useData()
@@ -28,13 +30,7 @@ export function Events() {
     category: 'workshop' as ChapterEvent['category'],
   })
 
-  if (loading || !data) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
-      </div>
-    )
-  }
+  if (loading || !data) return <PortalPage loading />
 
   const { profile, chapter } = data
   const now = new Date()
@@ -76,63 +72,63 @@ export function Events() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">Events</h1>
-          <p className="text-slate-400 mt-1">Register for chapter events and workshops</p>
-        </div>
-        {canManage && (
-          <Dialog open={manageOpen} onOpenChange={setManageOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4" /> Add Event
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Event</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div>
-                  <Label>Title</Label>
-                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+    <PortalPage>
+      <PageHeader
+        title="Events"
+        description="Register for chapter events and workshops."
+        action={
+          canManage ? (
+            <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4" /> Add Event
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="portal-card border-[var(--border-default)] bg-[var(--surface-raised)]">
+                <DialogHeader>
+                  <DialogTitle className="portal-card-title">Create Event</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div>
+                    <Label>Title</Label>
+                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Date</Label>
+                    <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Location</Label>
+                    <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Capacity</Label>
+                    <Input type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Category</Label>
+                    <select
+                      className="flex h-10 w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 text-sm text-[var(--text-primary)]"
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value as ChapterEvent['category'] })}
+                    >
+                      <option value="workshop">Workshop</option>
+                      <option value="conference">Conference</option>
+                      <option value="meeting">Meeting</option>
+                      <option value="deadline">Deadline</option>
+                    </select>
+                  </div>
+                  <Button onClick={handleCreate}>Create Event</Button>
                 </div>
-                <div>
-                  <Label>Description</Label>
-                  <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Date</Label>
-                  <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Location</Label>
-                  <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Capacity</Label>
-                  <Input type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Category</Label>
-                  <select
-                    className="flex h-10 w-full rounded-lg border border-slate-700 bg-navy-800 px-3 text-sm text-slate-100"
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value as ChapterEvent['category'] })}
-                  >
-                    <option value="workshop">Workshop</option>
-                    <option value="conference">Conference</option>
-                    <option value="meeting">Meeting</option>
-                    <option value="deadline">Deadline</option>
-                  </select>
-                </div>
-                <Button onClick={handleCreate}>Create Event</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+              </DialogContent>
+            </Dialog>
+          ) : undefined
+        }
+      />
 
       <Tabs defaultValue="upcoming">
         <TabsList>
@@ -143,7 +139,7 @@ export function Events() {
         </TabsList>
         {(['upcoming', 'registered', 'past', 'all'] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {filterEvents(tab).map((event) => (
                 <EventCard
                   key={event.id}
@@ -154,11 +150,11 @@ export function Events() {
               ))}
             </div>
             {filterEvents(tab).length === 0 && (
-              <p className="text-center text-slate-500 py-12">No events in this category.</p>
+              <p className="portal-empty">No events in this category.</p>
             )}
           </TabsContent>
         ))}
       </Tabs>
-    </div>
+    </PortalPage>
   )
 }

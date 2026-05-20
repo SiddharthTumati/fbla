@@ -6,26 +6,30 @@ A polished React web app for FBLA chapter information management — member dash
 
 ## Homepage (`/`)
 
-Full-screen video hero with pill navbar (mobile menu on small screens), staggered typography, and scrollable portal features below. Signed-in users can return to the landing page anytime via **View landing** in the portal sidebar.
+Full-screen cinematic photo collage hero with cross-fade transitions, headline, and a single **Enter Portal** CTA. Signed-in users return via **Landing Page** in the portal sidebar.
 
 ## Themes (saved in browser)
 
 | Theme | Hero headline | Colors | Fonts |
 |-------|---------------|--------|-------|
-| **FBLA National** | make · *your* · mark | Navy, gold | Oswald + Caveat |
-| **Marvin Ridge** | lead · *your* · chapter | Royal blue, orange | Barlow Condensed |
+| **FBLA National** | Make · *Your* · Mark | Navy, gold | Oswald + Inter |
+| **Marvin Ridge** | Lead · *Your* · Chapter | Royal blue, orange | Barlow Condensed + Inter |
 
-Toggle **FBLA / Marvin Ridge** in the navbar, feature sections, portal sidebar, or **Profile → Appearance**.
+Toggle **FBLA / Marvin Ridge** in the portal sidebar or **Profile → Appearance**.
+
+## Portal UI
+
+Dashboard, Events, Competitions, Achievements, and Profile share a glass-card layout with brand gradients, display typography, and accent tabs — matched to the landing page aesthetic.
 
 ## Features
 
-- **Member dashboard** — real-time stats, points chart, activity feed
+- **Member dashboard** — live stats from your profile, points chart, activity feed
 - **Event registration** — one-click signup with points (+50, early bird +25)
 - **Competition tracker** — enter events, record placements, chapter leaderboard
 - **Achievements** — 15 unlockable badges with progress bars
 - **Google SSO** — Firebase Auth with officer/admin roles via env emails
 - **localStorage persistence** — member profile per account; chapter events/leaderboard per **browser tab session** (so judges don’t overwrite each other in demo booths)
-- **Demo mode** — works without Firebase for local previews (Member / Officer / Admin)
+- **Demo mode** — works without Firebase for local previews (Member / Officer / Admin). Demo roles are for presentation only, not real security.
 
 ## Quick Start
 
@@ -37,7 +41,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173)
 
-Without Firebase configured, use **Try Demo** on the landing page.
+Without Firebase configured, use **Enter Portal** on the landing page (demo member sign-in).
 
 ## Firebase Setup (~15 min)
 
@@ -59,13 +63,13 @@ Add the Vercel domain to Firebase authorized domains before sharing with judges.
 
 ## Demo Script (for judges)
 
-1. Open your live URL (or localhost) → scroll the homepage, try both themes
-2. **Try Demo → Member** (or Sign in with Google)
+1. Open your live URL (or localhost) → view the collage hero, switch themes in the portal
+2. **Enter Portal** (or Sign in with Google)
 3. **Dashboard** — note rank, points, and activity feed
 4. **Events** → Register for **State Leadership Conference** → +50 points, achievements may unlock
 5. **Competitions** → Enter an event, set placement → leaderboard updates with your name
 6. **Achievements** — view unlocked badges and point rules
-7. **View landing** in the sidebar to show the homepage again
+7. **Landing Page** in the sidebar to show the homepage again
 8. **Profile** — (admin only) Reset demo data before your presentation
 
 ## Tech Stack
@@ -85,8 +89,9 @@ src/
   hooks/          useAuth, useData, useTheme
   lib/            firebase, storage, points, demo-session, themes
   data/seed.ts    Chapter seed data
-  components/     layout, dashboard, branding, ui
-public/branding/  FBLA and Marvin Ridge logos
+  components/     layout, HeroCollage, dashboard, branding, ui
+  lib/collage.ts  Hero collage image paths
+public/branding/  Logos + collage/ (chapter photos)
 ```
 
 ## Environment Variables

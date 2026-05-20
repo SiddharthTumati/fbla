@@ -23,6 +23,8 @@ import { POINT_RULES } from '@/lib/points'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { PortalPage } from '@/components/layout/PortalPage'
 
 const iconMap: Record<string, LucideIcon> = {
   footprints: Footprints,
@@ -66,38 +68,37 @@ function getProgress(
 export function Achievements() {
   const { data, loading } = useData()
 
-  if (loading || !data) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
-      </div>
-    )
-  }
+  if (loading || !data) return <PortalPage loading />
 
   const { profile } = data
   const unlocked = profile.achievements.length
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Achievements</h1>
-        <p className="text-slate-400 mt-1">
-          {unlocked} of {ACHIEVEMENTS.length} unlocked
-        </p>
-      </div>
+    <PortalPage>
+      <PageHeader
+        title="Achievements"
+        description={`${unlocked} of ${ACHIEVEMENTS.length} badges unlocked — earn points through events and competitions.`}
+      />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Point Rules</CardTitle>
+          <CardTitle>Point Rules</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="grid gap-2 sm:grid-cols-2 text-sm text-slate-400">
-            <li>Event registration: <span className="text-gold-400">+{POINT_RULES.eventRegister}</span></li>
-            <li>Early registration (30+ days): <span className="text-gold-400">+{POINT_RULES.earlyRegister}</span></li>
-            <li>Enter competition: <span className="text-gold-400">+{POINT_RULES.competitionEnter}</span></li>
-            <li>1st place: <span className="text-gold-400">+{POINT_RULES.placement1}</span></li>
-            <li>2nd place: <span className="text-gold-400">+{POINT_RULES.placement2}</span></li>
-            <li>3rd place: <span className="text-gold-400">+{POINT_RULES.placement3}</span></li>
+          <ul className="grid gap-3 sm:grid-cols-2 text-sm">
+            {[
+              ['Event registration', POINT_RULES.eventRegister],
+              ['Early registration (30+ days)', POINT_RULES.earlyRegister],
+              ['Enter competition', POINT_RULES.competitionEnter],
+              ['1st place', POINT_RULES.placement1],
+              ['2nd place', POINT_RULES.placement2],
+              ['3rd place', POINT_RULES.placement3],
+            ].map(([label, pts]) => (
+              <li key={label} className="flex justify-between gap-4 rounded-lg bg-[var(--surface-muted)]/40 px-3 py-2">
+                <span className="text-[var(--text-muted)]">{label}</span>
+                <span className="font-semibold text-[var(--brand-accent)]">+{pts}</span>
+              </li>
+            ))}
           </ul>
         </CardContent>
       </Card>
@@ -113,33 +114,38 @@ export function Achievements() {
               key={achievement.id}
               className={cn(
                 'transition-all duration-300',
-                isUnlocked && 'border-gold-500/40 shadow-lg shadow-gold-500/5 achievement-unlock',
+                isUnlocked && 'portal-achievement--unlocked achievement-unlock',
               )}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   <div
                     className={cn(
                       'rounded-xl p-3',
-                      isUnlocked ? 'bg-gold-500/20' : 'bg-navy-800',
+                      isUnlocked ? 'portal-stat-icon' : 'bg-[var(--surface-muted)]/80',
                     )}
                   >
                     {isUnlocked ? (
-                      <Icon className="h-6 w-6 text-gold-400" />
+                      <Icon className="h-6 w-6 text-[var(--brand-accent)]" strokeWidth={1.75} />
                     ) : (
-                      <Lock className="h-6 w-6 text-slate-600" />
+                      <Lock className="h-6 w-6 text-[var(--text-muted)]" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className={cn('font-semibold', isUnlocked ? 'text-gold-400' : 'text-slate-400')}>
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className={cn(
+                        'font-semibold',
+                        isUnlocked ? 'text-[var(--brand-accent)]' : 'text-[var(--text-primary)]',
+                      )}
+                    >
                       {achievement.title}
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1">{achievement.description}</p>
-                    {!isUnlocked && (
-                      <Progress value={progress} className="mt-3 h-1.5" />
-                    )}
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">{achievement.description}</p>
+                    {!isUnlocked && <Progress value={progress} className="mt-3 h-1.5" />}
                     {isUnlocked && (
-                      <p className="text-xs text-emerald-400 mt-2 font-medium">Unlocked</p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                        Unlocked
+                      </p>
                     )}
                   </div>
                 </div>
@@ -148,6 +154,6 @@ export function Achievements() {
           )
         })}
       </div>
-    </div>
+    </PortalPage>
   )
 }

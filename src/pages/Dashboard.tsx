@@ -4,21 +4,16 @@ import { useData } from '@/hooks/useData'
 import { StatCard } from '@/components/dashboard/StatCard'
 import { PointsChart } from '@/components/dashboard/PointsChart'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
-import { Button } from '@/components/ui/button'
+import { ACHIEVEMENTS } from '@/data/seed'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { ACHIEVEMENTS } from '@/data/seed'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { PortalPage } from '@/components/layout/PortalPage'
 
 export function Dashboard() {
   const { data, loading, rank } = useData()
 
-  if (loading || !data) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
-      </div>
-    )
-  }
+  if (loading || !data) return <PortalPage loading />
 
   const { profile, chapter } = data
   const nextAchievement = ACHIEVEMENTS.find((a) => !profile.achievements.includes(a.id))
@@ -31,11 +26,11 @@ export function Dashboard() {
   )
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 lg:text-3xl">Dashboard</h1>
-        <p className="text-slate-400 mt-1">Your chapter activity at a glance</p>
-      </div>
+    <PortalPage>
+      <PageHeader
+        title="Dashboard"
+        description="Your chapter activity, points, and upcoming events at a glance."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -65,24 +60,22 @@ export function Dashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <PointsChart history={profile.pointsHistory} />
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
-              <Button asChild>
-                <Link to="/events">
-                  Register for Event <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="secondary" asChild>
-                <Link to="/competitions">View Leaderboard</Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/achievements">Achievements</Link>
-              </Button>
+              <Link to="/events" className="portal-quick-link">
+                Register for Event <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/competitions" className="portal-quick-link portal-quick-link--secondary">
+                View Leaderboard
+              </Link>
+              <Link to="/achievements" className="portal-quick-link portal-quick-link--ghost">
+                Achievements
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -96,15 +89,15 @@ export function Dashboard() {
             <CardContent>
               {nextAchievement ? (
                 <>
-                  <p className="font-medium text-gold-400">{nextAchievement.title}</p>
-                  <p className="text-sm text-slate-500 mt-1">{nextAchievement.description}</p>
-                  <Progress value={progressToNext} className="mt-4" />
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="font-semibold text-[var(--brand-accent)]">{nextAchievement.title}</p>
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">{nextAchievement.description}</p>
+                  <Progress value={progressToNext} className="mt-4 h-2" />
+                  <p className="mt-2 text-xs text-[var(--text-muted)]">
                     {profile.points} / {nextAchievement.threshold} pts
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-emerald-400">All achievements unlocked!</p>
+                <p className="text-sm font-medium text-emerald-400">All achievements unlocked!</p>
               )}
             </CardContent>
           </Card>
@@ -117,19 +110,24 @@ export function Dashboard() {
             <CardTitle>Upcoming Events</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3">
+            <ul className="divide-y divide-[var(--border-default)]">
               {upcoming.slice(0, 3).map((e) => (
-                <li key={e.id} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-300">{e.title}</span>
-                  <Button size="sm" variant="ghost" asChild>
-                    <Link to="/events">Register</Link>
-                  </Button>
+                <li key={e.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <p className="font-medium text-[var(--text-primary)]">{e.title}</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <Link to="/events" className="portal-quick-link !py-2 !px-4 text-xs shrink-0">
+                    Register
+                  </Link>
                 </li>
               ))}
             </ul>
           </CardContent>
         </Card>
       )}
-    </div>
+    </PortalPage>
   )
 }

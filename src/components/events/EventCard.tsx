@@ -24,26 +24,26 @@ export function EventCard({ event, isRegistered, onRegister }: EventCardProps) {
   const canRegister = !isPast && !isRegistered && !full
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base">{event.title}</CardTitle>
-          <Badge variant={categoryColors[event.category] as 'default'} className="capitalize shrink-0">
+          <CardTitle className="text-base leading-snug">{event.title}</CardTitle>
+          <Badge variant={categoryColors[event.category] as 'default'} className="shrink-0 capitalize">
             {event.category}
           </Badge>
         </div>
-        <CardDescription>{event.description}</CardDescription>
+        <CardDescription className="line-clamp-2">{event.description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col justify-between gap-4">
-        <div className="space-y-2 text-sm text-slate-400">
-          <p className="flex items-center gap-2">
-            <span className="text-gold-400 font-medium">{formatDate(event.date)}</span>
+      <CardContent className="mt-auto flex flex-1 flex-col justify-between gap-4">
+        <div className="space-y-2.5 text-sm text-[var(--text-muted)]">
+          <p>
+            <span className="font-semibold text-[var(--brand-accent)]">{formatDate(event.date)}</span>
           </p>
           <p className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0" /> {event.location}
+            <MapPin className="h-4 w-4 shrink-0 text-[var(--brand-accent)]/80" /> {event.location}
           </p>
           <p className="flex items-center gap-2">
-            <Users className="h-4 w-4 shrink-0" />
+            <Users className="h-4 w-4 shrink-0 text-[var(--brand-accent)]/80" />
             {event.registeredIds.length}/{event.capacity} registered
           </p>
         </div>
@@ -52,11 +52,7 @@ export function EventCard({ event, isRegistered, onRegister }: EventCardProps) {
             <Check className="h-4 w-4" /> Registered
           </Button>
         ) : (
-          <Button
-            className="w-full"
-            disabled={!canRegister}
-            onClick={onRegister}
-          >
+          <Button className="w-full" disabled={!canRegister} onClick={onRegister}>
             {isPast ? 'Past Event' : full ? 'Full' : 'Register (+50 pts)'}
           </Button>
         )}

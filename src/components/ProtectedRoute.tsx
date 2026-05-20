@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     )
   }
 
-  if (!user) return <Navigate to={{ pathname: '/', hash: 'portal-cta' }} replace />
+  if (!user) return <Navigate to="/" replace />
 
   return <DataProvider key={user.uid}>{children}</DataProvider>
 }

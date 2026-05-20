@@ -34,7 +34,7 @@ export function ThemeSwitcher({ variant = 'glass', className }: ThemeSwitcherPro
           type="button"
           onClick={() => setTheme(id)}
           className={cn(
-            'px-2.5 py-1.5 rounded-full text-[10px] sm:text-xs font-normal transition-all duration-300 lowercase',
+            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-200',
             theme === id
               ? variant === 'portal'
                 ? 'bg-[var(--brand-primary)] text-white'

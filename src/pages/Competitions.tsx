@@ -8,18 +8,14 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { PortalPage } from '@/components/layout/PortalPage'
 
 export function Competitions() {
   const { data, loading, enterComp, rank } = useData()
   const [selectedPlacement, setSelectedPlacement] = useState<Record<string, 1 | 2 | 3 | undefined>>({})
 
-  if (loading || !data) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-accent)] border-t-transparent" />
-      </div>
-    )
-  }
+  if (loading || !data) return <PortalPage loading />
 
   const { profile, chapter } = data
 
@@ -52,11 +48,11 @@ export function Competitions() {
     .map((e, i) => ({ ...e, rank: i + 1 }))
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Competitions</h1>
-        <p className="text-slate-400 mt-1">Track events and climb the chapter leaderboard</p>
-      </div>
+    <PortalPage>
+      <PageHeader
+        title="Competitions"
+        description="Enter competitive events and track your standing on the chapter leaderboard."
+      />
 
       <Tabs defaultValue="events">
         <TabsList>
@@ -65,22 +61,24 @@ export function Competitions() {
         </TabsList>
 
         <TabsContent value="events" className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {chapter.competitions.map((comp) => {
               const entered = profile.enteredCompetitionIds.includes(comp.id)
               const placement = profile.competitionPlacements[comp.id]
               return (
-                <Card key={comp.id}>
+                <Card key={comp.id} className="flex flex-col">
                   <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base">{comp.name}</CardTitle>
-                      <Badge variant="secondary">{comp.category}</Badge>
+                      <Badge variant="secondary" className="shrink-0 capitalize">
+                        {comp.category}
+                      </Badge>
                     </div>
                     <CardDescription>Up to {comp.maxPoints} points</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="mt-auto space-y-4">
                     {entered && (
-                      <p className="text-sm text-emerald-400 flex items-center gap-1">
+                      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-400">
                         <Check className="h-4 w-4" /> Entered
                         {placement && ` — ${placement}${placement === 1 ? 'st' : placement === 2 ? 'nd' : 'rd'} place`}
                       </p>
@@ -116,58 +114,67 @@ export function Competitions() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Medal className="h-5 w-5 text-gold-400" />
+                <Medal className="h-5 w-5 text-[var(--brand-accent)]" />
                 Chapter Leaderboard
               </CardTitle>
               <CardDescription>
-                Your rank: <span className="text-gold-400 font-semibold">#{rank}</span>
+                Your rank:{' '}
+                <span className="font-semibold text-[var(--brand-accent)]" style={{ fontFamily: 'var(--font-display)' }}>
+                  #{rank}
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                {leaderboard.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className={cn(
-                      'flex items-center gap-4 rounded-lg p-3 transition',
-                      entry.isCurrentUser || entry.id === profile.uid
-                        ? 'bg-gold-500/10 border border-gold-500/20'
-                        : 'bg-navy-800/50',
-                    )}
-                  >
-                    <span
+              <ul className="space-y-2">
+                {leaderboard.map((entry) => {
+                  const isYou = entry.isCurrentUser || entry.id === profile.uid
+                  return (
+                    <li
+                      key={entry.id}
                       className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold',
-                        entry.rank === 1 && 'bg-gold-500 text-navy-950',
-                        entry.rank === 2 && 'bg-slate-400 text-navy-950',
-                        entry.rank === 3 && 'bg-amber-700 text-white',
-                        entry.rank > 3 && 'bg-navy-800 text-slate-400',
+                        'portal-list-row flex items-center gap-4',
+                        isYou ? 'portal-list-row--highlight' : 'portal-list-row--default',
                       )}
                     >
-                      {entry.rank}
-                    </span>
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback>
-                        {entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-200 truncate">
-                        {entry.name}
-                        {(entry.isCurrentUser || entry.id === profile.uid) && (
-                          <span className="ml-2 text-xs text-gold-400">(You)</span>
+                      <span
+                        className={cn(
+                          'portal-rank-badge',
+                          entry.rank === 1 && 'portal-rank-1',
+                          entry.rank === 2 && 'portal-rank-2',
+                          entry.rank === 3 && 'portal-rank-3',
+                          entry.rank > 3 && 'portal-rank-n',
                         )}
-                      </p>
-                      <p className="text-xs text-slate-500">{entry.competitionPoints} competition pts</p>
-                    </div>
-                    <span className="font-bold text-gold-400">{entry.points.toLocaleString()}</span>
-                  </li>
-                ))}
+                      >
+                        {entry.rank}
+                      </span>
+                      <Avatar className="h-9 w-9 border border-[var(--border-default)]">
+                        <AvatarFallback className="text-xs font-semibold">
+                          {entry.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-[var(--text-primary)]">
+                          {entry.name}
+                          {isYou && (
+                            <span className="ml-2 text-xs font-semibold text-[var(--brand-accent)]">(You)</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)]">{entry.competitionPoints} competition pts</p>
+                      </div>
+                      <span
+                        className="font-bold tabular-nums text-[var(--brand-accent)]"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                      >
+                        {entry.points.toLocaleString()}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </PortalPage>
   )
 }
