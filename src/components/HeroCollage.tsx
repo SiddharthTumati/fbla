@@ -1,21 +1,23 @@
-import type { CSSProperties } from 'react'
-import { COLLAGE_IMAGES } from '@/lib/collage'
-
-const CYCLE_SECONDS = COLLAGE_IMAGES.length * 2.4
+import { useMemo, type CSSProperties } from 'react'
+import { getCollageOrder } from '@/lib/collage'
 
 export function HeroCollage() {
+  const images = useMemo(() => getCollageOrder(), [])
+  const cycleSeconds = images.length * 2.4
+  const slideDuration = cycleSeconds / images.length
+
   return (
     <div className="hero-collage absolute inset-0 overflow-hidden" aria-hidden>
       <div className="hero-cinema">
-        {COLLAGE_IMAGES.map((src, i) => (
+        {images.map((src, i) => (
           <div
-            key={src}
+            key={`${src}-${i}`}
             className="hero-cinema-slide"
             data-index={i % 4}
             style={
               {
-                '--delay': `${i * (CYCLE_SECONDS / COLLAGE_IMAGES.length)}s`,
-                '--cycle': `${CYCLE_SECONDS}s`,
+                '--delay': `${i * slideDuration}s`,
+                '--cycle': `${cycleSeconds}s`,
               } as CSSProperties
             }
           >
